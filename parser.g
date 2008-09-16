@@ -4,44 +4,32 @@ from ops import *
 parser MipsParser:
     ignore: ' '
     token END: "$"
-    token NUM: '-?[0-9]+'
+    token NUM: '[0-9]+'
     token HEX: '0x[0-9]+'
     token REGISTER: '\$(gp|sp|fp|ra|v[0-1]|a[0-3]|t[0-9]|s[0-7]|k[0-1]|zero)'
     token LABEL: '\\w+:'
     token LABEL_REF: '\\w+'
-    token SYSTEM_CALL: 'syscall'
+    token SYSCALL: 'syscall'
     token STRING: '"[^"]*"'
-    token COMMENT: '#[^\n]*\n'
-
-    rule end_line: "\n" | COMMENT
-
-    rule empty_line: end_line
-
-    rule program: empty_line*
-                  (data text {{ ret = data, text }} |
+    
+    rule program: (data text {{ ret = data, text }} |
                    text data {{ ret = data, text }}) END {{ return ret }}
 
-    rule data: ".data\n" {{ allocations = [] }}
-               (allocation {{ allocations.append(allocation) }} |
-                empty_line)*
+    rule data: ".data\n" {{ allocations = {} }}
+               (allocation {{ allocations.update(allocation) }})*
                {{ return allocations }}
 
     rule text: ".text\n" {{ lines = [] }}
                        (statement {{ lines.append(statement) }} |
-                        LABEL end_line {{ lines.append(LABEL.strip(':')) }} |
-                        SYSTEM_CALL end_line {{ lines.append(SYSCALL()) }} |
-                        empty_line)+
+                        LABEL "\n" {{ lines.append(LABEL.strip(':')) }} |
+                        SYSCALL "\n" {{ lines.append(SYSCALL) }})+
                         {{ return lines }}
 
-    rule allocation: LABEL (allocate_asciiz {{ f = allocate_asciiz }} |
-                            allocate_space {{ f = allocate_space }}) end_line
-                            {{ return f(LABEL.strip(':')) }}
+    rule allocation: LABEL ".asciiz"?
+                           ( immediate {{ value = immediate }} |
+                             STRING {{ value = STRING }} ) "\n"
+                             {{ return [[LABEL.strip(':'), value.strip('"')]] }}
 
-    rule allocate_asciiz: ".asciiz" STRING {{ str_val = STRING }}
-                          {{ return lambda lbl : CREATE_STRING(lbl, str_val) }}
-
-    rule allocate_space: ".space" NUM {{ nsize = NUM }}
-                         {{ return lambda lbl : CREATE_SPACE(lbl, nsize) }}
 
     rule statement: (add_op {{ ret = add_op }} |
                     addi_op {{ ret = addi_op }} |
@@ -55,18 +43,14 @@ parser MipsParser:
                     jr_op {{ ret = jr_op }} |
                     move_op {{ ret = move_op }} |
                     div_op {{ ret = div_op }} |
-                    mfhi_op {{ ret = mfhi_op }} |
-                    lw_op {{ ret = lw_op }} |
-                    sw_op {{ ret = sw_op }} ) end_line {{ return ret }}
+                    mfhi_op {{ ret = mfhi_op }}) "\n" {{ return ret }}
 
     rule immediate: NUM {{ return int(NUM, 10) }} | HEX {{ return int(HEX, 16) }}
-    rule num_or_register: NUM | REGISTER
 
     rule indirect_address: {{ offset = 0 }}
-                           (NUM {{ offset = NUM }} |
-                            LABEL_REF {{ offset = LABEL_REF }})?
+                           (NUM {{ offset = NUM }})?
                            "\\(" REGISTER {{ reg = REGISTER }} "\\)"
-                           {{ return (offset, reg) }}
+                           {{ return (offset, register) }}
 
     rule add_op: "add"
                  REGISTER {{ dst = REGISTER }} ","
@@ -83,7 +67,7 @@ parser MipsParser:
     rule li_op: "li"
                 REGISTER {{ dst = REGISTER }} ","
                 immediate {{ imm = immediate }}
-                {{ return ADDIU(dst, "$0", imm) }}
+                {{ return LI(dst, imm) }}
 
     rule j_op: "j" LABEL_REF {{ return JUMP(LABEL_REF) }}
 
@@ -120,11 +104,3 @@ parser MipsParser:
 
     rule mfhi_op: "mfhi" REGISTER {{ dst = REGISTER }}
                   {{ return MFHI(dst) }}
-
-    rule lw_op: "lw" REGISTER {{ dst = REGISTER }} ","
-                     indirect_address {{ iaddress = indirect_address }}
-                     {{ return LW(dst, iaddress) }}
-
-    rule sw_op: "sw" REGISTER {{ src = REGISTER }} ","
-                     indirect_address {{ iaddress = indirect_address }}
-                     {{ return SW(src, iaddress) }}

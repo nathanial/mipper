@@ -7,8 +7,6 @@ import yapps.yappsrt as yappsrt
 
 class MipsParserScanner(yappsrt.Scanner):
     patterns = [
-        ('"sw"', re.compile('sw')),
-        ('"lw"', re.compile('lw')),
         ('"mfhi"', re.compile('mfhi')),
         ('"div"', re.compile('div')),
         ('"move"', re.compile('move')),
@@ -25,45 +23,27 @@ class MipsParserScanner(yappsrt.Scanner):
         ('"add"', re.compile('add')),
         ('"\\\\)"', re.compile('\\)')),
         ('"\\\\("', re.compile('\\(')),
-        ('".space"', re.compile('.space')),
         ('".asciiz"', re.compile('.asciiz')),
+        ('"\\n"', re.compile('\n')),
         ('".text\\n"', re.compile('.text\n')),
         ('".data\\n"', re.compile('.data\n')),
-        ('"\\n"', re.compile('\n')),
         (' ', re.compile(' ')),
         ('END', re.compile('$')),
-        ('NUM', re.compile('-?[0-9]+')),
+        ('NUM', re.compile('[0-9]+')),
         ('HEX', re.compile('0x[0-9]+')),
         ('REGISTER', re.compile('\\$(gp|sp|fp|ra|v[0-1]|a[0-3]|t[0-9]|s[0-7]|k[0-1]|zero)')),
         ('LABEL', re.compile('\\w+:')),
         ('LABEL_REF', re.compile('\\w+')),
         ('SYSCALL', re.compile('syscall')),
         ('STRING', re.compile('"[^"]*"')),
-        ('COMMENT', re.compile('#[^\n]*\n')),
     ]
     def __init__(self, str):
         yappsrt.Scanner.__init__(self,None,[' '],str)
 
 class MipsParser(yappsrt.Parser):
     Context = yappsrt.Context
-    def end_line(self, _parent=None):
-        _context = self.Context(_parent, self._scanner, self._pos, 'end_line', [])
-        _token = self._peek('"\\n"', 'COMMENT')
-        if _token == '"\\n"':
-            self._scan('"\\n"')
-        else: # == 'COMMENT'
-            COMMENT = self._scan('COMMENT')
-
-    def empty_line(self, _parent=None):
-        _context = self.Context(_parent, self._scanner, self._pos, 'empty_line', [])
-        end_line = self.end_line(_context)
-
     def program(self, _parent=None):
         _context = self.Context(_parent, self._scanner, self._pos, 'program', [])
-        while self._peek('"\\n"', 'COMMENT', '".data\\n"', '".text\\n"', 'LABEL', 'SYSCALL', '"add"', '"addi"', '"li"', '"j"', '"beq"', '"bne"', '"blt"', '"la"', '"jal"', '"jr"', '"move"', '"div"', '"mfhi"', '"lw"', '"sw"', 'END') in ['"\\n"', 'COMMENT']:
-            empty_line = self.empty_line(_context)
-        if self._peek() not in ['"\\n"', 'COMMENT', '".data\\n"', '".text\\n"', 'LABEL', 'SYSCALL', '"add"', '"addi"', '"li"', '"j"', '"beq"', '"bne"', '"blt"', '"la"', '"jal"', '"jr"', '"move"', '"div"', '"mfhi"', '"lw"', '"sw"', 'END']:
-            raise yappsrt.SyntaxError(charpos=self._scanner.get_prev_char_pos(), context=_context, msg='Need one of ' + ', '.join(['"\\n"', 'COMMENT', '".data\\n"', '".text\\n"', 'LABEL', 'SYSCALL', '"add"', '"addi"', '"li"', '"j"', '"beq"', '"bne"', '"blt"', '"la"', '"jal"', '"jr"', '"move"', '"div"', '"mfhi"', '"lw"', '"sw"', 'END']))
         _token = self._peek('".data\\n"', '".text\\n"')
         if _token == '".data\\n"':
             data = self.data(_context)
@@ -79,16 +59,12 @@ class MipsParser(yappsrt.Parser):
     def data(self, _parent=None):
         _context = self.Context(_parent, self._scanner, self._pos, 'data', [])
         self._scan('".data\\n"')
-        allocations = []
-        while self._peek('"\\n"', 'COMMENT', 'LABEL', 'SYSCALL', '".data\\n"', '".text\\n"', '"add"', '"addi"', '"li"', '"j"', '"beq"', '"bne"', '"blt"', '"la"', '"jal"', '"jr"', '"move"', '"div"', '"mfhi"', '"lw"', '"sw"', 'END') in ['"\\n"', 'COMMENT', 'LABEL']:
-            _token = self._peek('"\\n"', 'COMMENT', 'LABEL')
-            if _token == 'LABEL':
-                allocation = self.allocation(_context)
-                allocations.append(allocation)
-            else: # in ['"\\n"', 'COMMENT']
-                empty_line = self.empty_line(_context)
-        if self._peek() not in ['"\\n"', 'COMMENT', 'LABEL', 'SYSCALL', '".data\\n"', '".text\\n"', '"add"', '"addi"', '"li"', '"j"', '"beq"', '"bne"', '"blt"', '"la"', '"jal"', '"jr"', '"move"', '"div"', '"mfhi"', '"lw"', '"sw"', 'END']:
-            raise yappsrt.SyntaxError(charpos=self._scanner.get_prev_char_pos(), context=_context, msg='Need one of ' + ', '.join(['"\\n"', 'COMMENT', 'LABEL', 'SYSCALL', '".data\\n"', '".text\\n"', '"add"', '"addi"', '"li"', '"j"', '"beq"', '"bne"', '"blt"', '"la"', '"jal"', '"jr"', '"move"', '"div"', '"mfhi"', '"lw"', '"sw"', 'END']))
+        allocations = {}
+        while self._peek('LABEL', '".text\\n"', 'END') == 'LABEL':
+            allocation = self.allocation(_context)
+            allocations.update(allocation)
+        if self._peek() not in ['LABEL', '".text\\n"', 'END']:
+            raise yappsrt.SyntaxError(charpos=self._scanner.get_prev_char_pos(), context=_context, msg='Need one of ' + ', '.join(['LABEL', '".text\\n"', 'END']))
         return allocations
 
     def text(self, _parent=None):
@@ -96,53 +72,39 @@ class MipsParser(yappsrt.Parser):
         self._scan('".text\\n"')
         lines = []
         while 1:
-            _token = self._peek('LABEL', 'SYSCALL', '"\\n"', 'COMMENT', '"add"', '"addi"', '"li"', '"j"', '"beq"', '"bne"', '"blt"', '"la"', '"jal"', '"jr"', '"move"', '"div"', '"mfhi"', '"lw"', '"sw"')
-            if _token not in ['LABEL', 'SYSCALL', '"\\n"', 'COMMENT']:
+            _token = self._peek('LABEL', 'SYSCALL', '"add"', '"addi"', '"li"', '"j"', '"beq"', '"bne"', '"blt"', '"la"', '"jal"', '"jr"', '"move"', '"div"', '"mfhi"')
+            if _token not in ['LABEL', 'SYSCALL']:
                 statement = self.statement(_context)
                 lines.append(statement)
             elif _token == 'LABEL':
                 LABEL = self._scan('LABEL')
-                end_line = self.end_line(_context)
+                self._scan('"\\n"')
                 lines.append(LABEL.strip(':'))
-            elif _token == 'SYSCALL':
+            else: # == 'SYSCALL'
                 SYSCALL = self._scan('SYSCALL')
-                end_line = self.end_line(_context)
+                self._scan('"\\n"')
                 lines.append(SYSCALL)
-            else: # in ['"\\n"', 'COMMENT']
-                empty_line = self.empty_line(_context)
-            if self._peek('LABEL', 'SYSCALL', '"\\n"', 'COMMENT', '"add"', '"addi"', '"li"', '"j"', '"beq"', '"bne"', '"blt"', '"la"', '"jal"', '"jr"', '"move"', '"div"', '"mfhi"', '"lw"', '"sw"', '".data\\n"', '".text\\n"', 'END') not in ['LABEL', 'SYSCALL', '"\\n"', 'COMMENT', '"add"', '"addi"', '"li"', '"j"', '"beq"', '"bne"', '"blt"', '"la"', '"jal"', '"jr"', '"move"', '"div"', '"mfhi"', '"lw"', '"sw"']: break
+            if self._peek('LABEL', 'SYSCALL', '"add"', '"addi"', '"li"', '"j"', '"beq"', '"bne"', '"blt"', '"la"', '"jal"', '"jr"', '"move"', '"div"', '"mfhi"', '".data\\n"', 'END') not in ['LABEL', 'SYSCALL', '"add"', '"addi"', '"li"', '"j"', '"beq"', '"bne"', '"blt"', '"la"', '"jal"', '"jr"', '"move"', '"div"', '"mfhi"']: break
         return lines
 
     def allocation(self, _parent=None):
         _context = self.Context(_parent, self._scanner, self._pos, 'allocation', [])
         LABEL = self._scan('LABEL')
-        _token = self._peek('".asciiz"', '".space"')
-        if _token == '".asciiz"':
-            allocate_asciiz = self.allocate_asciiz(_context)
-            f = allocate_asciiz
-        else: # == '".space"'
-            allocate_space = self.allocate_space(_context)
-            f = allocate_space
-        end_line = self.end_line(_context)
-        return f(LABEL.strip(':'))
-
-    def allocate_asciiz(self, _parent=None):
-        _context = self.Context(_parent, self._scanner, self._pos, 'allocate_asciiz', [])
-        self._scan('".asciiz"')
-        STRING = self._scan('STRING')
-        str_val = STRING
-        return lambda lbl : CREATE_STRING(lbl, str_val)
-
-    def allocate_space(self, _parent=None):
-        _context = self.Context(_parent, self._scanner, self._pos, 'allocate_space', [])
-        self._scan('".space"')
-        NUM = self._scan('NUM')
-        nsize = NUM
-        return lambda lbl : CREATE_SPACE(lbl, nsize)
+        if self._peek('".asciiz"', 'STRING', 'NUM', 'HEX') == '".asciiz"':
+            self._scan('".asciiz"')
+        _token = self._peek('STRING', 'NUM', 'HEX')
+        if _token != 'STRING':
+            immediate = self.immediate(_context)
+            value = immediate
+        else: # == 'STRING'
+            STRING = self._scan('STRING')
+            value = STRING
+        self._scan('"\\n"')
+        return [[LABEL.strip(':'), value.strip('"')]]
 
     def statement(self, _parent=None):
         _context = self.Context(_parent, self._scanner, self._pos, 'statement', [])
-        _token = self._peek('"add"', '"addi"', '"li"', '"j"', '"beq"', '"bne"', '"blt"', '"la"', '"jal"', '"jr"', '"move"', '"div"', '"mfhi"', '"lw"', '"sw"')
+        _token = self._peek('"add"', '"addi"', '"li"', '"j"', '"beq"', '"bne"', '"blt"', '"la"', '"jal"', '"jr"', '"move"', '"div"', '"mfhi"')
         if _token == '"add"':
             add_op = self.add_op(_context)
             ret = add_op
@@ -179,16 +141,10 @@ class MipsParser(yappsrt.Parser):
         elif _token == '"div"':
             div_op = self.div_op(_context)
             ret = div_op
-        elif _token == '"mfhi"':
+        else: # == '"mfhi"'
             mfhi_op = self.mfhi_op(_context)
             ret = mfhi_op
-        elif _token == '"lw"':
-            lw_op = self.lw_op(_context)
-            ret = lw_op
-        else: # == '"sw"'
-            sw_op = self.sw_op(_context)
-            ret = sw_op
-        end_line = self.end_line(_context)
+        self._scan('"\\n"')
         return ret
 
     def immediate(self, _parent=None):
@@ -204,19 +160,14 @@ class MipsParser(yappsrt.Parser):
     def indirect_address(self, _parent=None):
         _context = self.Context(_parent, self._scanner, self._pos, 'indirect_address', [])
         offset = 0
-        if self._peek('NUM', 'LABEL_REF', '"\\\\("') != '"\\\\("':
-            _token = self._peek('NUM', 'LABEL_REF')
-            if _token == 'NUM':
-                NUM = self._scan('NUM')
-                offset = NUM
-            else: # == 'LABEL_REF'
-                LABEL_REF = self._scan('LABEL_REF')
-                offset = LABEL_REF
+        if self._peek('NUM', '"\\\\("') == 'NUM':
+            NUM = self._scan('NUM')
+            offset = NUM
         self._scan('"\\\\("')
         REGISTER = self._scan('REGISTER')
         reg = REGISTER
         self._scan('"\\\\)"')
-        return (offset, reg)
+        return (offset, register)
 
     def add_op(self, _parent=None):
         _context = self.Context(_parent, self._scanner, self._pos, 'add_op', [])
@@ -347,26 +298,6 @@ class MipsParser(yappsrt.Parser):
         REGISTER = self._scan('REGISTER')
         dst = REGISTER
         return MFHI(dst)
-
-    def lw_op(self, _parent=None):
-        _context = self.Context(_parent, self._scanner, self._pos, 'lw_op', [])
-        self._scan('"lw"')
-        REGISTER = self._scan('REGISTER')
-        dst = REGISTER
-        self._scan('","')
-        indirect_address = self.indirect_address(_context)
-        iaddress = indirect_address
-        return LW(dst, iaddress)
-
-    def sw_op(self, _parent=None):
-        _context = self.Context(_parent, self._scanner, self._pos, 'sw_op', [])
-        self._scan('"sw"')
-        REGISTER = self._scan('REGISTER')
-        src = REGISTER
-        self._scan('","')
-        indirect_address = self.indirect_address(_context)
-        iaddress = indirect_address
-        return SW(src, iaddress)
 
 
 def parse(rule, text):

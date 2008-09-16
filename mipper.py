@@ -1,0 +1,63 @@
+import logging
+import MipsParser
+
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(asctime)s %(levelname)s %(message)s',
+                    filename='mipper.log',
+                    filemode='w')
+
+class Register:
+    def __init__(self): self.value = 0
+    def __cmp__(self, that): return self.value.__cmp__(that)
+    def setValue(self, value): self.value = value
+    def getValue(self): return self.value
+
+class Program:
+    def __init__(self, text):
+        allocations, instructions = MipsParser.parse("program", text)
+        self.state = State(instructions, allocations)
+
+    def execute(self):
+        self.state.allocateMemory()
+        while self.state.hasNextInstruction():
+            self.state.executeNextInstruction()
+
+
+class State:
+
+    def __init__(self, instructions, allocations):
+        regs = ["$gp", "$sp" "$fp", "$ra", "$zero", "$hi", "$lo", "$pc"]
+        regs.extend(self.create_registers("$v", 1))
+        regs.extend(self.create_registers("$a", 3))
+        regs.extend(self.create_registers("$t", 9))
+        regs.extend(self.create_registers("$s", 7))
+        regs.extend(self.create_registers("$k", 1))
+        self.registers = dict(map(lambda reg: [reg, Register()], regs))
+        self.instructions = instructions
+        self.allocations = allocations
+        self.memory = []
+
+    def allocateMemory(self):
+        for a in self.allocations:
+            a.allocate(self)
+
+    def create_registers(self, prefix, n):
+        regs = []
+        for i in range(0, n + 1):
+            regs.append(prefix + str(i))
+        return regs
+
+    def executeNextInstruction(self):
+        instruction = self.currentInstruction()
+        instruction.execute(self)
+        self.incrementProgramCounter()
+
+    def hasNextInstruction(self):
+        return self.programCounter() < len(self.instructions)
+
+    def currentInstruction(self):
+        return self.instructions[self.programCounter().value]
+
+    def programCounter(self):
+        return self.registers["$pc"]
+

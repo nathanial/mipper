@@ -1,14 +1,6 @@
 from __future__ import with_statement
 import parser
 from mipper import Program
-import logging
-
-
-
-logging.basicConfig(level=logging.DEBUG,
-                    format='%(asctime)s %(levelname)s %(message)s',
-                    filename='w')
-
 
 def test1():
     fib_text = ""
@@ -21,7 +13,7 @@ def test1():
     fib_prog.execute()
 
 def test2():
-    mem_text
+    mem_text = ""
     with open("test1.asm") as f:
         for line in f:
             line = line.replace("\\n", "\n")
@@ -32,6 +24,8 @@ def test2():
 
 def perform_test():
     test1()
+    print "\nSECOND PROGRAM"
+    test2()
 
 if __name__ == '__main__':
     perform_test()

@@ -1,4 +1,9 @@
 from bool_ops import Branch
+import logging
+
+logging.basicConfig(level=logging.DEBUG,
+                    format="%(levelname)s %(message)s",
+                    filename="ops.log")
 
 class LA:
     def __init__(self, dst, label_ref):
@@ -6,7 +11,8 @@ class LA:
         self.label_ref = label_ref
 
     def execute(self, state):
-        state.registers[self.dst].setValue(state.labels[self.label_ref])
+        idx = state.labels[self.label_ref]
+        state.registers[self.dst].setValue(idx)
 
 class LI:
     def __init__(self, dst, im):

@@ -1,3 +1,5 @@
+import logging
+
 class JUMP:
     def __init__(self, label_ref):
         self.label_ref = label_ref
@@ -10,7 +12,7 @@ class JAL:
         self.label_ref = label_ref
 
     def execute(self, state):
-        state.registers["$ra"].setValue(state.programCounter().getValue() + 1)
+        state.registers["$ra"].setValue(state.programCounter().getValue())
         jump_position = state.instructions.index(self.label_ref)
         state.registers["$pc"].setValue(jump_position)
 
@@ -92,8 +94,14 @@ class SYSCALL:
     def print_double(state): pass
 
     def print_string(self, state):
-        val = state.registers["$a0"].getValue()
-        print str(val),
+        idx = state.registers["$a0"].getValue()
+        val = ""
+        for c in state.memory[idx:]:
+            if not c is '\0':
+                val += c
+            else:
+                break
+        print val,
 
     def read_integer(self, state): pass
     def read_float(self, state): pass
@@ -103,7 +111,7 @@ class SYSCALL:
 class CREATE_STRING:
     def __init__(self, label,  ascii_string):
         self.label = label
-        self.ascii_string = ascii_string.replace('"', '')
+        self.ascii_string = ascii_string.replace('"', '') + "\0"
 
     def allocate(self, state):
         idx = len(state.memory)

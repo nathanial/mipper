@@ -2,7 +2,7 @@ import logging
 import parser
 
 logging.basicConfig(level=logging.DEBUG,
-                    format='%(asctime)s %(levelname)s %(message)s',
+                    format='%(levelname)s %(message)s',
                     filename='mipper.log',
                     filemode='w')
 

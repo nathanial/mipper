@@ -26,7 +26,7 @@ class Program:
 class State:
 
     def __init__(self, instructions, allocations):
-        regs = ["$gp", "$sp" "$fp", "$ra", "$zero", "$hi", "$lo", "$pc"]
+        regs = ["$at", "$gp", "$sp" "$fp", "$ra", "$zero", "$hi", "$lo", "$pc"]
         regs.extend(self.create_registers("$v", 1))
         regs.extend(self.create_registers("$a", 3))
         regs.extend(self.create_registers("$t", 9))

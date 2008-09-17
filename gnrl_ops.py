@@ -124,7 +124,9 @@ class CREATE_SPACE:
         self.size = size
 
     def allocate(self, state):
-        array = map(lambda x : 0, range(0, self.size))
+        if not (self.size % 4 == 0): raise "word addressing only at this time"
+
+        array = map(lambda x : 0, range(0, self.size / 4))
         idx = len(state.memory)
         state.memory.extend(array)
         state.labels.update([[self.label, idx]])

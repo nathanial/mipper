@@ -8,6 +8,7 @@ main:
         sw    $t6, theArray($zero)   # Sets the first term to 1
         sw    $t6, theArray($t7)  # Sets the second term to 1
         li    $t0, 8              # Sets t0 to 8
+
 loop:
         addi  $t3, $t0, -8
         addi  $t4, $t0, -4

@@ -21,6 +21,7 @@ def test2():
 
     mem_prog = Program(mem_text)
     mem_prog.execute()
+    print str(mem_prog.state.memory),
 
 def perform_test():
     test1()

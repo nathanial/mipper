@@ -3,6 +3,13 @@ from gnrl_ops import *
 from math_ops import *
 from bool_ops import *
 from pseudo_ops import *
+
+def append_or_extend(lines, addend):
+    if type(addend) is list:
+       lines.extend(addend)
+    else:
+       lines.append(addend)
+
 %%
 parser MipsParser:
     ignore: ' '
@@ -30,7 +37,7 @@ parser MipsParser:
                {{ return allocations }}
 
     rule text: ".text\n" {{ lines = [] }}
-                       (statement {{ lines.append(statement) }} |
+                       (statement {{ append_or_extend(lines, statement) }} |
                         LABEL end_line {{ lines.append(LABEL.strip(':')) }} |
                         SYSTEM_CALL end_line {{ lines.append(SYSCALL()) }} |
                         empty_line)+
@@ -43,7 +50,7 @@ parser MipsParser:
     rule allocate_asciiz: ".asciiz" STRING {{ str_val = STRING }}
                           {{ return lambda lbl : CREATE_STRING(lbl, str_val) }}
 
-    rule allocate_space: ".space" NUM {{ nsize = NUM }}
+    rule allocate_space: ".space" NUM {{ nsize = int(NUM) }}
                          {{ return lambda lbl : CREATE_SPACE(lbl, nsize) }}
 
     rule immediate: NUM {{ return int(NUM, 10) }} | HEX {{ return int(HEX, 16) }}
@@ -128,12 +135,14 @@ parser MipsParser:
                  LABEL_REF {{ ref = LABEL_REF }}
                  {{ return BGT(reg1, reg2, ref) }}
 
-    rule blt_op: "blt"
+    rule blt_op: "blt" {{ ret = [] }}
                  REGISTER {{ reg1 = REGISTER }} ","
-                 REGISTER {{ reg2 = REGISTER }} ","
-                 LABEL_REF {{ ref = LABEL_REF }}
-                 {{ return BLT(reg1, reg2, ref) }}
-
+                 (REGISTER {{ reg2 = REGISTER}} |
+                  immediate {{ reg2 = "$at" }}
+                  {{ ret = [LI(reg2, immediate)] }}) ","
+                  LABEL_REF {{ ref = LABEL_REF }}
+                  {{ ret.append(BLT(reg1, reg2, ref)) }}
+                  {{ return ret }}
     rule bge_op: "bge"
                  REGISTER {{ reg1 = REGISTER }} ","
                  REGISTER {{ reg2 = REGISTER }} ","

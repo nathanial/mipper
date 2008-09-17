@@ -1,120 +1,97 @@
+from mipper import AssignmentOp, AssignmentImmediate, AssignHiLo
+
 def checkOverflow(val):
     if type(val) is long:
         raise "overflow exception"
 
-class ADD:
-    def __init__(self, dst, reg1, reg2):
-        self.dst = dst
-        self.reg1 = reg1
-        self.reg2 = reg2
-
-    def execute(self, state):
-        val1 = state.registers[self.reg1].getValue()
-        val2 = state.registers[self.reg2].getValue()
-        result = val1 + val2
+def checked(meth):
+    def f(val1, val2):
+        result = meth(val1, val2)
         checkOverflow(result)
-        state.registers[self.dst].setValue(result)
+        return result
+    return f
 
-class SUB:
+def add(val1, val2): return val1 + val2
+def sub(val1, val2): return val1 - val2
+def div(val1, val2): return (val1 % val2, val1 / val2)
+def mult(val1, val2):
+    result = val1 * val2
+    if type(result) is long:
+        hi = result >> 32
+        lo = result & 0x7FFFFFFF
+    else:
+        hi = 0
+        lo = result
+    return hi, lo
+
+class ADD(object):
     def __init__(self, dst, reg1, reg2):
         self.dst = dst
         self.reg1 = reg1
         self.reg2 = reg2
 
-    def execute(self, state):
-        val1 = state.registers[self.reg1].getValue()
-        val2 = state.registers[self.reg2].setValue()
-        result = val1 - val2
-        checkOverflow(result)
-        state.registers[self.dst].setValue(result)
+    execute = AssignmentOp("dst", "reg1", "reg2")(checked(add))
 
-class ADDU:
+class SUB(object):
     def __init__(self, dst, reg1, reg2):
         self.dst = dst
         self.reg1 = reg1
         self.reg2 = reg2
 
-    def execute(self, state):
-        val1 = state.registers[self.reg1].getValue()
-        val2 = state.registers[self.reg2].getValue()
-        state.registers[self.dst].setValue(val1 + val2)
+    execute = AssignmentOp("dst", "reg1", "reg2")(checked(sub))
 
-class ADDI:
+class ADDU(object):
+    def __init__(self, dst, reg1, reg2):
+        self.dst = dst
+        self.reg1 = reg1
+        self.reg2 = reg2
+
+    execute = AssignmentOp("dst", "reg1", "reg2")(add)
+
+class ADDI(object):
     def __init__(self, dst, reg, im):
         self.dst = dst
         self.reg = reg
         self.im = im
 
-    def execute(self, state):
-        val = state.registers[self.reg].getValue()
-        result = val + self.im
-        checkOverflow(result)
-        state.registers[self.dst].setValue(val + self.im)
+    execute = AssignmentImmediate("dst", "reg", "im")(checked(add))
 
-class ADDIU:
+class ADDIU(object):
     def __init__(self, dst, reg, im):
         self.dst = dst
         self.reg = reg
         self.im = im
 
-    def execute(self, state):
-        val = state.registers[self.reg].getValue()
-        state.registers[self.dst].setValue(val + self.im)
+    execute = AssignmentImmediate("dst", "reg", "im")(add)
 
-class SUBU:
+class SUBU(object):
     def __init__(self, dst, reg1, reg2):
         self.dst = dst
         self.reg1 = reg1
         self.reg2 = reg2
 
-    def execute(self, state):
-        val1 = state.registers[self.reg1].getValue()
-        val2 = state.registers[self.reg2].getValue()
-        state.registers[self.dst].setValue(val1 - val2)
+    execute = AssignmentOp("dst", "reg1", "reg2")(sub)
 
-class DIV:
+class DIV(object):
     def __init__(self, reg1, reg2):
         self.reg1 = reg1
         self.reg2 = reg2
 
-    def execute(self, state):
-        val1 = state.registers[self.reg1].getValue()
-        val2 = state.registers[self.reg2].getValue()
-        hi = val1 % val2
-        lo = val1 / val2
-        state.registers["$hi"].setValue(hi)
-        state.registers["$lo"].setValue(lo)
+    execute = AssignHiLo("reg1", "reg2")(div)
 
-class DIVU:
+class DIVU(object):
     def __init__(self, reg1, reg2):
         self.reg1 = reg1
         self.reg2 = reg2
 
-    def execute(self, state):
-        val1 = state.registers[self.reg1].getValue()
-        val2 = state.registers[self.reg2].getValue()
-        hi = val1 % val2
-        lo = val1 / val2
-        state.registers["$hi"].setValue(hi)
-        state.registers["$lo"].setValue(lo)
+    execute = AssignHiLo("reg1", "reg2")(div)
 
 class MULT:
     def __init__(self, reg1,reg2):
         self.reg1 = reg1
         self.reg2 = reg2
 
-    def execute(self, state):
-        val1 = state.registers[self.reg1].getValue()
-        val2 = state.registers[self.reg2].getValue()
-        result = val1 * val2
-        if type(result) is long:
-            hi = result >> 32
-            lo = result & 0x7FFFFFFF
-        else:
-            hi = 0
-            lo = result
-        state.registers["$hi"] = hi
-        state.registers["$lo"] = lo
+    execute = AssignHiLo("reg1", "reg2")(mult)
 
 
 

@@ -1,51 +1,47 @@
+from mipper import AssignmentOp, AssignmentImmediate, AssignHiLo
 
-class AND:
+
+def land(val1, val2):
+    return val1 & val2
+def lor(val1, val2):
+    return val1 | val2
+def slt(val1, val2):
+    if val1 < val2:
+        return 1
+    else:
+        return 0
+
+class AND(object):
     def __init__(self, dst, reg1, reg2):
         self.dst = dst
         self.reg1 = reg1
         self.reg2 = reg2
 
-    def execute(self, state):
-        val1 = state.registers[self.reg1].getValue()
-        val2 = state.registers[self.reg2].getValue()
-        result = val1 & val2
-        state.registers[self.dst].setValue(result)
+    execute = AssignmentOp("dst", "reg1", "reg2")(land)
 
-class OR:
+class OR(object):
     def __init__(self, dst, reg1, reg2):
         self.dst = dst
         self.reg1 = reg1
         self.reg2 = reg2
 
-    def execute(self, state):
-        val1 = state.registers[self.reg1].getValue()
-        val2 = state.registers[self.reg2].getValue()
-        result = val1 | val2
-        state.registers[self.dst].setValue(result)
+    execute = AssignmentOp("dst", "reg1", "reg2")(lor)
 
-class ANDI:
+class ANDI(object):
     def __init__(self, dst, reg, im):
         self.dst = dst
         self.reg = reg
         self.im = im
 
-    def execute(self, state):
-        val = state.registers[self.reg].getValue()
-        result = val & self.im
-        state.registers[self.dst].setValue(result)
+    execute = AssignmentImmediate("dst", "reg", "im")(land)
 
-class ORI:
+class ORI(object):
     def __init__(self, dst, reg, im):
         self.dst = dst
         self.reg = reg
         self.im = im
 
-    def execute(self, state):
-        val = state.registers[self.reg].getValue()
-        result = val | self.im
-        state.registers[self.dst].setValue(result)
-
-
+    execute = AssignmentImmediate("dst", "reg", "im")(lor)
 
 class Branch:
     def __init__(self, reg1, reg2, label_ref, test_fn):
@@ -70,60 +66,35 @@ class BNE(Branch):
     def __init__(self, reg1, reg2, label_ref):
         Branch.__init__(self, reg1, reg2, label_ref, lambda x,y: x != y)
 
-class SLT:
+class SLT(object):
     def __init__(self, dst, reg1, reg2):
         self.dst = dst
         self.reg1 = reg2
         self.reg2 = reg2
 
-    def execute(self, state):
-        val1 = state.registers[self.reg1].getValue()
-        val2 = state.registers[self.reg2].getValue()
-        if val1 < val2:
-            state.registers[self.dst].setValue(1)
-        else:
-            state.registers[self.dst].setValue(0)
+    execute = AssignmentOp("dst", "reg1", "reg2")(slt)
 
-class SLTI:
+class SLTI(object):
     def __init__(self, dst, reg, im):
         self.dst = dst
         self.reg = reg
         self.im = im
 
-    def execute(self, state):
-        val = state.registers[self.reg1].getValue()
-        if val < im:
-            state.registers[self.dst].setValue(1)
-        else:
-            state.registers[self.dst].setValue(0)
+    execute = AssignmentImmediate("dst", "reg", "im")(slt)
 
-class SLTU:
+
+class SLTU(object):
     def __init__(self, dst, reg1, reg2):
         self.dst = dst
         self.reg1 = reg1
         self.reg2 = reg2
 
+    execute = AssignmentOp("dst", "reg", "im")(slt)
 
-    def execute(self, state):
-        val1 = state.registers[self.reg1].getValue()
-        val2 = state.registers[self.reg2].getValue()
-        if val1 < val2:
-            state.registers[self.dst].setValue(1)
-        else:
-            state.registers[self.dst].setValue(0)
-
-class SLTIU:
+class SLTIU(object):
     def __init__(self, dst, reg, im):
         self.dst = dst
         self.reg = reg
         self.im = im
 
-    def execute(self, state):
-        val = state.registers[self.reg].getValue()
-        if val < im:
-            state.registers[self.dst].setValue(1)
-        else:
-            state.registers[self.dst].setValue(0)
-
-
-
+    execute = AssignmentImmediate("dst", "reg", "im")(slt)

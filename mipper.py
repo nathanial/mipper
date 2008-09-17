@@ -36,6 +36,7 @@ class State:
         self.instructions = instructions
         self.allocations = allocations
         self.memory = []
+        self.markers = {}
 
     def allocateMemory(self):
         for a in self.allocations:

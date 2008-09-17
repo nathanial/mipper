@@ -67,8 +67,8 @@ parser MipsParser:
                    mfhi_op {{ ret = mfhi_op }} |
                    mflo_op {{ ret = mflo_op }} |
                    lw_op {{ ret = lw_op }} |
-                   sw_op {{ ret = sw_op }} |
-                   syscall {{ ret = sycall }}) {{ return ret }}
+                   sw_op {{ ret = sw_op }})
+                   {{ return ret }}
 
     rule math_op: (add_op {{ ret = add_op }} |
                    sub_op {{ ret = sub_op }} |
@@ -92,6 +92,69 @@ parser MipsParser:
                    sltu_op {{ ret = sltu_op }} |
                    sltiu_op {{ ret = sltiu_op }})
                    {{ return ret }}
+
+    rule pseudo_op: (la_op {{ ret = la_op }} |
+                     li_op {{ ret = li_op }} |
+                     move_op {{ ret = move_op }} |
+                     bgt_op {{ ret = bgt_op }} |
+                     blt_op {{ ret = blt_op }} |
+                     bge_op {{ ret = bge_op }} |
+                     ble_op {{ ret = ble_op }} |
+                     bgtu_op {{ ret = bgtu_op }} |
+                     bgtz_op {{ ret = bgtz_op }})
+                     {{ return ret }}
+
+    #pseudo ops ----------------------------------
+
+    rule la_op: "la"
+                REGISTER {{ dst = REGISTER }}
+                LABEL_REF {{ ref = LABEL_REF }}
+                {{ return LA(dst, ref) }}
+
+    rule li_op: "li"
+                REGISTER {{ dst = REGISTER }}
+                immediate {{ im = immediate }}
+                {{ return LI(dst, im) }}
+
+    rule move_op: "move"
+                  REGISTER {{ dst = REGISTER }}
+                  REGISTER {{ src = REGISTER }}
+                  {{ return MOVE(dst, src) }}
+
+    rule bgt_op: "bgt"
+                 REGISTER {{ reg1 = REGISTER }}
+                 REGISTER {{ reg2 = REGISTER }}
+                 LABEL_REF {{ ref = LABEL_REF }}
+                 {{ return BGT(reg1, reg2, ref) }}
+
+    rule blt_op: "blt"
+                 REGISTER {{ reg1 = REGISTER }}
+                 REGISTER {{ reg2 = REGISTER }}
+                 LABEL_REF {{ ref = LABEL_REF }}
+                 {{ return BLT(reg1, reg2, ref) }}
+
+    rule bge_op: "bge"
+                 REGISTER {{ reg1 = REGISTER }}
+                 REGISTER {{ reg2 = REGISTER }}
+                 LABEL_REF {{ ref = LABEL_REF }}
+                 {{ return BGE(reg1, reg2, ref) }}
+
+    rule ble_op: "ble"
+                 REGISTER {{ reg1 = REGISTER }}
+                 REGISTER {{ reg2 = REGISTER }}
+                 LABEL_REF {{ ref = LABEL_REF }}
+                 {{ return BLE(reg1, reg2, ref) }}
+
+    rule bgtu_op: "bgtu"
+                  REGISTER {{ reg1 = REGISTER }}
+                  REGISTER {{ reg2 = REGISTER }}
+                  LABEL_REF {{ ref = LABEL_REF }}
+                  {{ return BGTU(reg1, reg2, ref) }}
+
+    rule bgtz_op: "bgtz"
+                  REGISTER {{ reg1 = REGISTER }}
+                  LABEL_REF {{ ref = LABEL_REF }}
+                  {{ return BGTZ(reg1, ref) }}
 
     #math ops ----------------------------------
 

@@ -1,5 +1,5 @@
 from __future__ import with_statement
-import parser
+import mips_parser
 from mipper import State
 import logging
 
@@ -17,7 +17,7 @@ def test1():
             line = line.replace("\\n", "\n")
             fib_prog += line
 
-    allocations, instructions = parser.parse("program", fib_prog)
+    allocations, instructions = mips_parser.parse("program", fib_prog)
     state = State(instructions, allocations)
     while state.has_next():
         state.next()
@@ -29,7 +29,7 @@ def test2():
             line = line.replace("\\n", "\n")
             mem_prog += line
 
-    allocations, instructions = parser.parse("program", mem_prog)
+    allocations, instructions = mips_parser.parse("program", mem_prog)
     state = State(instructions, allocations)
     while state.has_next():
         state.next()

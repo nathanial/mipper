@@ -1,5 +1,5 @@
 import logging
-import MipsParser
+import parser
 
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(levelname)s %(message)s',
@@ -14,7 +14,7 @@ class Register:
 
 class Program:
     def __init__(self, text):
-        allocations, instructions = MipsParser.parse("program", text)
+        allocations, instructions = parser.parse("program", text)
         self.state = State(instructions, allocations)
 
     def execute(self):
@@ -50,15 +50,25 @@ class State:
 
     def executeNextInstruction(self):
         instruction = self.currentInstruction()
-        instruction.execute(self)
-        self.incrementProgramCounter()
+        if self.isLabel(instruction):
+            self.incrementProgramCounter()
+            self.executeNextInstruction()
+        else:
+            instruction.execute(self)
+            self.incrementProgramCounter()
+
+    def isLabel(self, instruction): return type(instruction) is str
 
     def hasNextInstruction(self):
         return self.programCounter() < len(self.instructions)
 
     def currentInstruction(self):
-        return self.instructions[self.programCounter().value]
+        return self.instructions[self.programCounter().getValue()]
 
     def programCounter(self):
         return self.registers["$pc"]
+
+    def incrementProgramCounter(self):
+        current_val = self.programCounter().getValue()
+        self.programCounter().setValue(current_val + 1)
 

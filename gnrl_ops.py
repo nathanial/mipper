@@ -10,7 +10,7 @@ class JAL:
         self.label_ref = label_ref
 
     def execute(self, state):
-        state.registers["$ra"].setValue(state.currentInstruction() + 1)
+        state.registers["$ra"].setValue(state.programCounter().getValue() + 1)
         jump_position = state.instructions.index(self.label_ref)
         state.registers["$pc"].setValue(jump_position)
 
@@ -84,21 +84,21 @@ class SYSCALL:
           7 : self.read_double,
           8 : self.read_string }[sysval](state)
 
-    def print_integer(state):
-        val = state.registers["$a0"].value
+    def print_integer(self, state):
+        val = state.registers["$a0"].getValue()
         print str(val),
 
-    def print_float(self): pass
-    def print_double(self): pass
+    def print_float(self, state): pass
+    def print_double(state): pass
 
-    def print_string(self):
-        val = state.registers["$a0"].value
+    def print_string(self, state):
+        val = state.registers["$a0"].getValue()
         print str(val),
 
-    def read_integer(self): pass
-    def read_float(self): pass
-    def read_double(self): pass
-    def read_string(self): pass
+    def read_integer(self, state): pass
+    def read_float(self, state): pass
+    def read_double(self, state): pass
+    def read_string(self, state): pass
 
 class CREATE_STRING:
     def __init__(self, label,  ascii_string):

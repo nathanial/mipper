@@ -55,8 +55,8 @@ class Branch:
         self.test_fn = test_fn
 
     def execute(self, state):
-        val1 = state.registers[reg1].getValue()
-        val2 = state.registers[reg2].getValue()
+        val1 = state.registers[self.reg1].getValue()
+        val2 = state.registers[self.reg2].getValue()
 
         if self.test_fn(val1, val2):
             jump_position = state.instructions.index(self.label_ref)

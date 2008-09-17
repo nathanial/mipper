@@ -1,6 +1,8 @@
+from bool_ops import Branch
+
 class LA:
     def __init__(self, dst, label_ref):
-        self.dst = dstr
+        self.dst = dst
         self.label_ref = label_ref
 
     def execute(self, state):
@@ -12,7 +14,7 @@ class LI:
         self.im = im
 
     def execute(self, state):
-        state.registers[self.dst].setValue(im)
+        state.registers[self.dst].setValue(self.im)
 
 class MOVE:
     def __init__(self, dst, src):
@@ -25,25 +27,25 @@ class MOVE:
 
 class BGT(Branch):
     def __init__(self, reg1, reg2, label_ref):
-        Branch.__init__(reg1, reg2, label_ref, lambda x,y: x > y)
+        Branch.__init__(self, reg1, reg2, label_ref, lambda x,y: x > y)
 
 class BLT(Branch):
     def __init__(self, reg1, reg2, label_ref):
-        Branch.__init__(reg1, reg2, label_ref, lambda x,y: x < y)
+        Branch.__init__(self, reg1, reg2, label_ref, lambda x,y: x < y)
 
 class BGE(Branch):
     def __init__(self, reg1, reg2, label_ref):
-        Branch.__init__(reg1, reg2, label_ref, lambda x,y: x >= y)
+        Branch.__init__(self, reg1, reg2, label_ref, lambda x,y: x >= y)
 
 class BLE(Branch):
     def __init__(self, reg1, reg2, label_ref):
-        Branch.__init__(reg1, reg2, label_ref, lambda x,y: x <= y)
+        Branch.__init__(self, reg1, reg2, label_ref, lambda x,y: x <= y)
 
 class BGTU(Branch):
     def __init__(self, reg1, reg2, label_ref):
-        Branch.__init__(reg1, reg2, label_ref, lambda x,y: x > y)
+        Branch.__init__(self, reg1, reg2, label_ref, lambda x,y: x > y)
 
 class BGTZ(Branch):
     def __init__(self, reg1, label_ref):
-        Branch.__init__(reg1, "$zero", label_ref, lambda x,y: x > y)
+        Branch.__init__(self, reg1, "$zero", label_ref, lambda x,y: x > y)
 

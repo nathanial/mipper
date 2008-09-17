@@ -2,6 +2,7 @@ from mipper import *
 from gnrl_ops import *
 from math_ops import *
 from bool_ops import *
+from pseudo_ops import *
 %%
 parser MipsParser:
     ignore: ' '
@@ -107,52 +108,52 @@ parser MipsParser:
     #pseudo ops ----------------------------------
 
     rule la_op: "la"
-                REGISTER {{ dst = REGISTER }}
+                REGISTER {{ dst = REGISTER }} ","
                 LABEL_REF {{ ref = LABEL_REF }}
                 {{ return LA(dst, ref) }}
 
     rule li_op: "li"
-                REGISTER {{ dst = REGISTER }}
+                REGISTER {{ dst = REGISTER }} ","
                 immediate {{ im = immediate }}
                 {{ return LI(dst, im) }}
 
     rule move_op: "move"
-                  REGISTER {{ dst = REGISTER }}
+                  REGISTER {{ dst = REGISTER }} ","
                   REGISTER {{ src = REGISTER }}
                   {{ return MOVE(dst, src) }}
 
     rule bgt_op: "bgt"
-                 REGISTER {{ reg1 = REGISTER }}
-                 REGISTER {{ reg2 = REGISTER }}
+                 REGISTER {{ reg1 = REGISTER }} ","
+                 REGISTER {{ reg2 = REGISTER }} ","
                  LABEL_REF {{ ref = LABEL_REF }}
                  {{ return BGT(reg1, reg2, ref) }}
 
     rule blt_op: "blt"
-                 REGISTER {{ reg1 = REGISTER }}
-                 REGISTER {{ reg2 = REGISTER }}
+                 REGISTER {{ reg1 = REGISTER }} ","
+                 REGISTER {{ reg2 = REGISTER }} ","
                  LABEL_REF {{ ref = LABEL_REF }}
                  {{ return BLT(reg1, reg2, ref) }}
 
     rule bge_op: "bge"
-                 REGISTER {{ reg1 = REGISTER }}
-                 REGISTER {{ reg2 = REGISTER }}
+                 REGISTER {{ reg1 = REGISTER }} ","
+                 REGISTER {{ reg2 = REGISTER }} ","
                  LABEL_REF {{ ref = LABEL_REF }}
                  {{ return BGE(reg1, reg2, ref) }}
 
     rule ble_op: "ble"
-                 REGISTER {{ reg1 = REGISTER }}
-                 REGISTER {{ reg2 = REGISTER }}
+                 REGISTER {{ reg1 = REGISTER }} ","
+                 REGISTER {{ reg2 = REGISTER }} ","
                  LABEL_REF {{ ref = LABEL_REF }}
                  {{ return BLE(reg1, reg2, ref) }}
 
     rule bgtu_op: "bgtu"
-                  REGISTER {{ reg1 = REGISTER }}
-                  REGISTER {{ reg2 = REGISTER }}
+                  REGISTER {{ reg1 = REGISTER }} ","
+                  REGISTER {{ reg2 = REGISTER }} ","
                   LABEL_REF {{ ref = LABEL_REF }}
                   {{ return BGTU(reg1, reg2, ref) }}
 
     rule bgtz_op: "bgtz"
-                  REGISTER {{ reg1 = REGISTER }}
+                  REGISTER {{ reg1 = REGISTER }} ","
                   LABEL_REF {{ ref = LABEL_REF }}
                   {{ return BGTZ(reg1, ref) }}
 
@@ -233,38 +234,38 @@ parser MipsParser:
                  {{ return ORI(dst, reg1, imm) }}
 
     rule beq_op: "beq"
-                 REGISTER {{ reg1 = REGISTER }}
-                 REGISTER {{ reg2 = REGISTER }}
-                 LABEL_REF {{ lref = LABEL_REF }}
-                 {{ return BEQ(reg1, reg2, label_ref) }}
+                 REGISTER {{ reg1 = REGISTER }} ","
+                 REGISTER {{ reg2 = REGISTER }} ","
+                 LABEL_REF {{ ref = LABEL_REF }}
+                 {{ return BEQ(reg1, reg2, ref) }}
 
     rule bne_op: "bne"
-                 REGISTER {{ reg1 = REGISTER }}
-                 REGISTER {{ reg2 = REGISTER }}
+                 REGISTER {{ reg1 = REGISTER }} ","
+                 REGISTER {{ reg2 = REGISTER }} ","
                  LABEL_REF {{ lref = LABEL_REF }}
                  {{ return BNE(reg1, reg2, label_ref) }}
 
     rule slt_op: "slt"
-                 REGISTER {{ dst = REGISTER }}
-                 REGISTER {{ reg1 = REGISTER }}
+                 REGISTER {{ dst = REGISTER }} ","
+                 REGISTER {{ reg1 = REGISTER }} ","
                  REGISTER {{ reg2 = REGISTER }}
                  {{ return SLT(dst, reg1, reg2) }}
 
     rule slti_op: "slti"
-                  REGISTER {{ dst = REGISTER }}
-                  REGISTER {{ reg1 = REGISTER }}
+                  REGISTER {{ dst = REGISTER }} ","
+                  REGISTER {{ reg1 = REGISTER }} ","
                   immediate {{ imm = immediate }}
                   {{ return SLTI(dst, reg1, imm) }}
 
     rule sltu_op: "sltu"
-                  REGISTER {{ dst = REGISTER }}
-                  REGISTER {{ reg = REGISTER }}
+                  REGISTER {{ dst = REGISTER }} ","
+                  REGISTER {{ reg = REGISTER }} ","
                   immediate {{ im = immediate }}
                   {{ return SLTU(dst, reg, im) }}
 
     rule sltiu_op: "sltiu"
-                   REGISTER {{ dst = REGISTER }}
-                   REGISTER {{ reg = REGISTER }}
+                   REGISTER {{ dst = REGISTER }} ","
+                   REGISTER {{ reg = REGISTER }} ","
                    immediate {{ im = immediate }}
                    {{ return SLTIU(dst, reg, im) }}
 
@@ -281,13 +282,11 @@ parser MipsParser:
     rule mflo_op: "mflo" REGISTER {{ return MFLO(REGISTER) }}
 
     rule lw_op: "lw"
-                REGISTER {{ dst = REGISTER }}
+                REGISTER {{ dst = REGISTER }} ","
                 indirect_address {{ iaddress = indirect_address }}
                 {{ return LW(dst, iaddress) }}
 
     rule sw_op: "sw"
-                REGISTER {{ src = REGISTER }}
+                REGISTER {{ src = REGISTER }} ","
                 indirect_address {{ iaddress = indirect_address }}
                 {{ return SW(src, iaddress) }}
-
-    rule syscall: SYSTEM_CALL {{ return SYSCALL() }}

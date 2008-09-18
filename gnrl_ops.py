@@ -103,7 +103,8 @@ class SYSCALL:
                 break
         print val,
 
-    def read_integer(self, state): pass
+    def read_integer(self, state):
+        state.registers["$a0"].setValue(int(input()))
     def read_float(self, state): pass
     def read_double(self, state): pass
     def read_string(self, state): pass

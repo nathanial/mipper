@@ -72,10 +72,6 @@ class State:
         current_val = self.programCounter().getValue()
         self.programCounter().setValue(current_val + 1)
 
-
-
-
-
 def AssignmentOp(dst, reg1, reg2):
     def f(meth):
         def g(obj, state):

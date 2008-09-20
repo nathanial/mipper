@@ -1,5 +1,5 @@
 import logging
-import parser
+from Mipper import parser
 
 logging.basicConfig(level=logging.DEBUG,
                     format='%(levelname)s %(message)s',
@@ -26,13 +26,16 @@ class Program:
 class State:
 
     def __init__(self, instructions, allocations):
-        regs = ["$at", "$gp", "$sp" "$fp", "$ra", "$zero", "$hi", "$lo", "$pc"]
+        regs = ["$at", "$gp", "$sp" "$fp", "$ra",
+                "$zero", "$hi", "$lo", "$pc"]
         regs.extend(self.create_registers("$v", 1))
         regs.extend(self.create_registers("$a", 3))
         regs.extend(self.create_registers("$t", 9))
         regs.extend(self.create_registers("$s", 7))
         regs.extend(self.create_registers("$k", 1))
+        regs.extend(self.create_registers("$f", 12))
         self.registers = dict(map(lambda reg: [reg, Register()], regs))
+        self.registers["$ra"].setValue(-1)
         self.instructions = instructions
         self.allocations = allocations
         self.memory = []
@@ -54,6 +57,7 @@ class State:
             self.incrementProgramCounter()
             self.executeNextInstruction()
         else:
+            logging.debug("executing " + str(instruction))
             instruction.execute(self)
             self.incrementProgramCounter()
 
@@ -71,34 +75,3 @@ class State:
     def incrementProgramCounter(self):
         current_val = self.programCounter().getValue()
         self.programCounter().setValue(current_val + 1)
-
-def AssignmentOp(dst, reg1, reg2):
-    def f(meth):
-        def g(obj, state):
-            val1 = state.registers[obj.__getattribute__(reg1)].getValue()
-            val2 = state.registers[obj.__getattribute__(reg2)].getValue()
-            result = meth(val1, val2)
-            state.registers[obj.__getattribute__(dst)].setValue(result)
-        return g
-    return f
-
-def AssignmentImmediate(dst, reg1, im):
-    def f(meth):
-        def g(obj, state):
-            val1 = state.registers[obj.__getattribute__(reg1)].getValue()
-            val2 = obj.__getattribute__(im)
-            result = meth(val1, val2)
-            state.registers[obj.__getattribute__(dst)].setValue(result)
-        return g
-    return f
-
-def AssignHiLo(reg1, reg2):
-    def f(meth):
-        def g(obj, state):
-            val1 = state.registers[obj.__getattribute__(reg1)].getValue()
-            val2 = state.registers[obj.__getattribute__(reg2)].getValue()
-            hi, lo = meth(val1, val2)
-            state.registers["$hi"].setValue(hi)
-            state.registers["$lo"].setValue(lo)
-        return g
-    return f

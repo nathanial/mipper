@@ -1,4 +1,4 @@
-from bool_ops import Branch
+from Mipper.bool_ops import Branch
 import logging
 
 logging.basicConfig(level=logging.DEBUG,

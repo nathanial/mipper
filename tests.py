@@ -23,10 +23,23 @@ def test2():
     mem_prog.execute()
     print str(mem_prog.state.memory),
 
+def test3():
+    io_text = ""
+    with open("test2.asm") as f:
+        for line in f:
+            line = line.replace("\\n", "\n")
+            io_text += line
+
+    io_prog = Program(io_text)
+    io_prog.execute()
+    print str(io_prog.state.memory),
+
 def perform_test():
     test1()
     print "\nSECOND PROGRAM"
     test2()
+    print "\nTHIRD PROGRAM"
+    test3()
 
 if __name__ == '__main__':
     perform_test()

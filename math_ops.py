@@ -1,4 +1,4 @@
-from mipper import AssignmentOp, AssignmentImmediate, AssignHiLo
+from Mipper.helpers import AssignmentOp, AssignmentImmediate, AssignHiLo
 
 def checkOverflow(val):
     if type(val) is long:

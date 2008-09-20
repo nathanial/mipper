@@ -22,7 +22,8 @@ class JR:
 
     def execute(self, state):
         jump_position = state.registers[self.return_reg].getValue()
-        state.registers["$pc"].setValue(jump_position)
+        if jump_position != -1:
+            state.registers["$pc"].setValue(jump_position)
 
 class MFHI:
     def __init__(self, dst):
@@ -90,8 +91,11 @@ class SYSCALL:
         val = state.registers["$a0"].getValue()
         print str(val),
 
-    def print_float(self, state): pass
-    def print_double(state): pass
+    def print_float(self, state):
+        print state.registers["$f12"].getValue(),
+
+    def print_double(state):
+        print state.registers["$f12"].getValue(),
 
     def print_string(self, state):
         idx = state.registers["$a0"].getValue()
@@ -104,10 +108,21 @@ class SYSCALL:
         print val,
 
     def read_integer(self, state):
-        state.registers["$a0"].setValue(int(input()))
-    def read_float(self, state): pass
-    def read_double(self, state): pass
-    def read_string(self, state): pass
+        state.registers["$v0"].setValue(int(raw_input()))
+
+    def read_float(self, state):
+        state.registers["$f0"].setValue(float(raw_input()))
+
+    def read_double(self, state):
+        state.registers["$f0"].setValue(float(raw_input()))
+
+    def read_string(self, state):
+        x = raw_input("")
+        idx = state.registers["$a0"].getValue()
+        length = state.registers["$a1"].getValue()
+        for i in range(0, min(length, len(x))):
+            state.memory[idx + i] = x[i]
+        state.memory[idx + min(length, len(x))] = "\0"
 
 class CREATE_STRING:
     def __init__(self, label,  ascii_string):

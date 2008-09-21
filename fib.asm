@@ -8,6 +8,8 @@ main:
         li $t6, 1
         li $t7, 2
 
+        BREAK
+
         jal Loop
 
 print_space:

@@ -30,6 +30,9 @@ class ADD(object):
         self.reg1 = reg1
         self.reg2 = reg2
 
+    def __str__(self):
+        return "ADD " + self.dst + " " + self.reg1 + " " + self.reg2
+
     execute = AssignmentOp("dst", "reg1", "reg2")(checked(add))
 
 class SUB(object):
@@ -37,6 +40,9 @@ class SUB(object):
         self.dst = dst
         self.reg1 = reg1
         self.reg2 = reg2
+
+    def __str__(self):
+        return "SUB " + self.dst + " " + self.reg1 + " " + self.reg2
 
     execute = AssignmentOp("dst", "reg1", "reg2")(checked(sub))
 
@@ -46,6 +52,9 @@ class ADDU(object):
         self.reg1 = reg1
         self.reg2 = reg2
 
+    def __str__(self):
+        return "ADDU " + self.dst + " " + self.reg1 + " " + self.reg2
+
     execute = AssignmentOp("dst", "reg1", "reg2")(add)
 
 class ADDI(object):
@@ -53,6 +62,9 @@ class ADDI(object):
         self.dst = dst
         self.reg = reg
         self.im = im
+
+    def __str__(self):
+        return "ADDI " + self.dst + " " + self.reg + " " + str(self.im)
 
     execute = AssignmentImmediate("dst", "reg", "im")(checked(add))
 
@@ -62,6 +74,9 @@ class ADDIU(object):
         self.reg = reg
         self.im = im
 
+    def __str__(self):
+        return "ADDIU " + self.dst + " " + self.reg + " " + str(self.im)
+
     execute = AssignmentImmediate("dst", "reg", "im")(add)
 
 class SUBU(object):
@@ -70,12 +85,18 @@ class SUBU(object):
         self.reg1 = reg1
         self.reg2 = reg2
 
+    def __str__(self):
+        return "SUBU " + self.dst + " " + self.reg1 + " " + self.reg2
+
     execute = AssignmentOp("dst", "reg1", "reg2")(sub)
 
 class DIV(object):
     def __init__(self, reg1, reg2):
         self.reg1 = reg1
         self.reg2 = reg2
+
+    def __str__(self):
+        return "DIV " + self.reg1 + " " + self.reg2
 
     execute = AssignHiLo("reg1", "reg2")(div)
 
@@ -84,12 +105,18 @@ class DIVU(object):
         self.reg1 = reg1
         self.reg2 = reg2
 
+    def __str__(self):
+        return "DIVU " + self.reg1 + " " + self.reg2
+
     execute = AssignHiLo("reg1", "reg2")(div)
 
-class MULT:
+class MULT(object):
     def __init__(self, reg1,reg2):
         self.reg1 = reg1
         self.reg2 = reg2
+
+    def __str__(self):
+        return "MULT " + self.reg1 + " " + self.reg2
 
     execute = AssignHiLo("reg1", "reg2")(mult)
 

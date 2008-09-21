@@ -17,6 +17,9 @@ class AND(object):
         self.reg1 = reg1
         self.reg2 = reg2
 
+    def __str__(self):
+        return "AND " + self.dst + " " + self.reg1 + " " + self.reg2
+
     execute = AssignmentOp("dst", "reg1", "reg2")(land)
 
 class OR(object):
@@ -24,6 +27,9 @@ class OR(object):
         self.dst = dst
         self.reg1 = reg1
         self.reg2 = reg2
+
+    def __str__(self):
+        return "OR " + self.dst + " " + self.reg1 + " " + self.reg2
 
     execute = AssignmentOp("dst", "reg1", "reg2")(lor)
 
@@ -33,6 +39,9 @@ class ANDI(object):
         self.reg = reg
         self.im = im
 
+    def __str__(self):
+        return "ANDI " + self.dst + " " + self.reg + " " + self.im
+
     execute = AssignmentImmediate("dst", "reg", "im")(land)
 
 class ORI(object):
@@ -40,6 +49,9 @@ class ORI(object):
         self.dst = dst
         self.reg = reg
         self.im = im
+
+    def __str__(self):
+        return "ORI " + self.dst + " " + self.reg + " " + self.im
 
     execute = AssignmentImmediate("dst", "reg", "im")(lor)
 
@@ -51,26 +63,35 @@ class Branch:
         self.test_fn = test_fn
 
     def execute(self, state):
-        val1 = state.registers[self.reg1].getValue()
-        val2 = state.registers[self.reg2].getValue()
+        val1 = state.getRegister(self.reg1)
+        val2 = state.getRegister(self.reg2)
 
         if self.test_fn(val1, val2):
             jump_position = state.instructions.index(self.label_ref)
-            state.registers["$pc"].setValue(jump_position)
+            state.setRegister("$pc", jump_position)
 
 class BEQ(Branch):
     def __init__(self, reg1, reg2, label_ref):
         Branch.__init__(self, reg1, reg2, label_ref, lambda x,y: x == y)
 
+    def __str__(self):
+        return "BEQ " + self.reg1 + " " + self.reg2 + " " + self.label_ref
+
 class BNE(Branch):
     def __init__(self, reg1, reg2, label_ref):
         Branch.__init__(self, reg1, reg2, label_ref, lambda x,y: x != y)
+
+    def __str__(self):
+        return "BNE " + self.reg1 + " " + self.reg2 + " " + self.label_ref
 
 class SLT(object):
     def __init__(self, dst, reg1, reg2):
         self.dst = dst
         self.reg1 = reg2
         self.reg2 = reg2
+
+    def __str__(self):
+        return "SLT " + self.dst + " " + self.reg1 + " " + self.reg2
 
     execute = AssignmentOp("dst", "reg1", "reg2")(slt)
 
@@ -79,6 +100,9 @@ class SLTI(object):
         self.dst = dst
         self.reg = reg
         self.im = im
+
+    def __str__(self):
+        return "SLTI " + self.dst + " " + self.dst + " " + self.reg + " " + self.im
 
     execute = AssignmentImmediate("dst", "reg", "im")(slt)
 
@@ -89,12 +113,18 @@ class SLTU(object):
         self.reg1 = reg1
         self.reg2 = reg2
 
-    execute = AssignmentOp("dst", "reg", "im")(slt)
+    def __str__(self):
+        return "SLTU " + self.dst + " " + self.reg1 + " " + self.reg2
+
+    execute = AssignmentOp("dst", "reg1", "reg2")(slt)
 
 class SLTIU(object):
     def __init__(self, dst, reg, im):
         self.dst = dst
         self.reg = reg
         self.im = im
+
+    def __str__(self):
+        return "SLTIU " + self.dst + " " + self.reg + " " + self.im
 
     execute = AssignmentImmediate("dst", "reg", "im")(slt)

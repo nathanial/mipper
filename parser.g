@@ -22,6 +22,7 @@ parser MipsParser:
     token SYSTEM_CALL: 'syscall'
     token STRING: '"[^"]*"'
     token COMMENT: '#[^\n]*\n'
+    token BREAK: 'BREAK'
 
     rule end_line: "\n" | COMMENT
 
@@ -40,7 +41,7 @@ parser MipsParser:
                        (statement {{ append_or_extend(lines, statement) }} |
                         LABEL end_line {{ lines.append(LABEL.strip(':')) }} |
                         SYSTEM_CALL end_line {{ lines.append(SYSCALL()) }} |
-                        empty_line)+
+                        BREAK "\n" {{ lines.append(BREAK) }} | empty_line )+
                         {{ return lines }}
 
     rule allocation: LABEL (allocate_asciiz {{ f = allocate_asciiz }} |

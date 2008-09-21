@@ -10,6 +10,10 @@ def test1():
             fib_text += line
 
     fib_prog = Program(fib_text)
+    def report_memory(state):
+        print state.currentInstruction()
+
+    fib_prog.on_suspension = report_memory
     fib_prog.execute()
 
 def test2():
@@ -36,10 +40,9 @@ def test3():
 
 def perform_test():
     test1()
-    print "\nSECOND PROGRAM"
     test2()
-    print "\nTHIRD PROGRAM"
     test3()
+
 
 if __name__ == '__main__':
     perform_test()

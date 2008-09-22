@@ -113,13 +113,13 @@ class SYSCALL:
 
     def print_integer(self, state):
         val = state.getRegister("$a0")
-        print str(val),
+        state._out(val)
 
     def print_float(self, state):
-        print state.getRegister("$f12")
+        state._out(state.getRegister("$12"))
 
     def print_double(state):
-        print state.getRegister("$f12")
+        state._out(state.getRegister("$f12"))
 
     def print_string(self, state):
         idx = state.getRegister("$a0")
@@ -129,19 +129,19 @@ class SYSCALL:
                 val += c
             else:
                 break
-        print val,
+        state._out(val)
 
     def read_integer(self, state):
-        state.setRegister("$v0", int(raw_input()))
+        state.setRegister("$v0", int(state._in()))
 
     def read_float(self, state):
-        state.setRegister("$f0", float(raw_input()))
+        state.setRegister("$f0", float(state._in()))
 
     def read_double(self, state):
-        state.setRegister("$f0", float(raw_input()))
+        state.setRegister("$f0", float(state._in()))
 
     def read_string(self, state):
-        x = raw_input("")
+        x = state._in()
         idx = state.getRegister("$a0")
         length = state.getRegister("$a1")
         for i in range(0, min(length, len(x))):

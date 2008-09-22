@@ -14,6 +14,19 @@ class Register:
     def setValue(self, value): self.value = value
     def getValue(self): return self.value
 
+class ProgramFactory:
+    def __init__(self, input, output, on_suspension):
+        self.input = input
+        self.output = output
+        self.on_suspension = on_suspension
+
+    def create_program(self, text):
+        program = Program(text)
+        program.state._in = self.input
+        program.state._out = self.output
+        program.on_suspension = self.on_suspension
+        return program
+
 class Program:
     def __init__(self, text):
         allocations, instructions = parser.parse("program", text)
@@ -21,16 +34,44 @@ class Program:
         self.on_suspension = lambda state : None
 
     def execute(self):
-        self.state.allocateMemory()
+        self.allocateMemory()
+        self.executeInstructions()
+
+    def allocateMemory(self):
+        for a in self.state.allocations:
+            a.allocate(self.state)
+
+    def executeInstructions(self):
         while self.state.hasNextInstruction():
             try:
-                self.state.executeNextInstruction()
+                self.executeNextInstruction()
             except ProgramSuspension:
                 self.on_suspension(self.state)
                 break
 
-class State:
+    def executeNextInstruction(self):
+        instruction = self.state.currentInstruction()
+        if self.isLabel(instruction):
+            self.state.incrementProgramCounter()
+            self.executeNextInstruction()
+        elif self.isBreak(instruction):
+            self.state.incrementProgramCounter()
+            self.suspendExecution()
+        else:
+            logging.debug("executing " + str(instruction))
+            instruction.execute(self.state)
+            self.state.incrementProgramCounter()
 
+    def suspendExecution(self):
+        raise ProgramSuspension()
+
+    def isLabel(self, instruction):
+        return (type(instruction) is str) and (instruction != "BREAK")
+
+    def isBreak(self, instruction):
+        return instruction == "BREAK"
+
+class State:
     def __init__(self, instructions, allocations):
         regs = ["$at", "$gp", "$sp" "$fp", "$ra",
                 "$zero", "$hi", "$lo", "$pc"]
@@ -47,41 +88,11 @@ class State:
         self.memory = []
         self.labels = {}
 
-    def allocateMemory(self):
-        for a in self.allocations:
-            a.allocate(self)
-
     def create_registers(self, prefix, n):
         regs = []
         for i in range(0, n + 1):
             regs.append(prefix + str(i))
         return regs
-
-    def executeNextInstruction(self):
-        instruction = self.currentInstruction()
-        if self.isLabel(instruction):
-            self.incrementProgramCounter()
-            self.executeNextInstruction()
-        elif self.isBreak(instruction):
-            self.incrementProgramCounter()
-            self.suspendExecution()
-        else:
-            logging.debug("executing " + str(instruction))
-            instruction.execute(self)
-            self.incrementProgramCounter()
-
-    def isLabel(self, instruction):
-        return (type(instruction) is str) and (instruction != "BREAK")
-
-    def isBreak(self, instruction):
-        return instruction == "BREAK"
-
-    def suspendExecution(self):
-        response = raw_input("Continue?")
-        if response == "y":
-            self.executeNextInstruction()
-        else:
-            raise ProgramSuspension()
 
     def hasNextInstruction(self):
         return self.programCounter() < len(self.instructions)

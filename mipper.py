@@ -1,5 +1,6 @@
 import logging
 from Mipper import parser
+import copy
 
 logging.basicConfig(level=logging.DEBUG,
                     format='%(levelname)s %(message)s',
@@ -14,20 +15,60 @@ class Register:
     def setValue(self, value): self.value = value
     def getValue(self): return self.value
 
-class Program:
+class ProgramFactory(object):
+    def __init__(self, **kwargs):
+        for key in kwargs:
+            if key == "input_function":
+                self.input_function = kwargs[key]
+            elif key == "output_function":
+                self.output_function = kwargs[key]
+            elif key == "on_suspension":
+                self.on_suspension = kwargs[key]
+            else:
+                raise "KWARG not recognized"
+
+    def create_program(self, text):
+        program = Program(text)
+        program.state._in = self.input_function
+        program.state._out = self.output_function
+        program.on_suspension = self.on_suspension
+        return program
+
+
+class Program(object):
     def __init__(self, text):
         allocations, instructions = parser.parse("program", text)
         self.state = State(instructions, allocations)
-        self.on_suspension = lambda state : None
 
     def execute(self):
-        self.state.allocateMemory()
-        while self.state.hasNextInstruction():
-            try:
-                self.state.executeNextInstruction()
-            except ProgramSuspension:
-                self.on_suspension(self.state)
-                break
+        self.allocateMemory()
+        self.executeInstructions()
+
+    def allocateMemory(self):
+        self.state = reduce(lambda ps, a: a.allocate(ps), self.state.allocations, self.state)
+
+    def executeInstructions(self):
+        def execute(state, instruction):
+            if state.is_suspended:
+                return state
+            if self.isLabel(instruction):
+                return state.incrementProgramCounter()
+            elif self.isBreak(instruction):
+                return state.incrementAndSuspend()
+            else:
+                logging.debug("executing " + str(instruction))
+                print instruction
+                return instruction.execute(state).incrementProgramCounter()
+
+        self.state = reduce(execute, self.state.instructions, self.state)
+
+    def suspendExecution(self): pass
+
+    def isLabel(self, txt):
+        return type(txt) is str and txt != "BREAK"
+
+    def isBreak(self, txt):
+        return txt == "BREAK"
 
 class State:
 
@@ -46,10 +87,9 @@ class State:
         self.allocations = allocations
         self.memory = []
         self.labels = {}
-
-    def allocateMemory(self):
-        for a in self.allocations:
-            a.allocate(self)
+        self._out = lambda str : None
+        self._in = lambda : None
+        self.is_suspended = False
 
     def create_registers(self, prefix, n):
         regs = []
@@ -57,47 +97,25 @@ class State:
             regs.append(prefix + str(i))
         return regs
 
-    def executeNextInstruction(self):
-        instruction = self.currentInstruction()
-        if self.isLabel(instruction):
-            self.incrementProgramCounter()
-            self.executeNextInstruction()
-        elif self.isBreak(instruction):
-            self.incrementProgramCounter()
-            self.suspendExecution()
-        else:
-            logging.debug("executing " + str(instruction))
-            instruction.execute(self)
-            self.incrementProgramCounter()
-
-    def isLabel(self, instruction):
-        return (type(instruction) is str) and (instruction != "BREAK")
-
-    def isBreak(self, instruction):
-        return instruction == "BREAK"
-
-    def suspendExecution(self):
-        response = raw_input("Continue?")
-        if response == "y":
-            self.executeNextInstruction()
-        else:
-            raise ProgramSuspension()
-
-    def hasNextInstruction(self):
-        return self.programCounter() < len(self.instructions)
-
-    def currentInstruction(self):
-        return self.instructions[self.programCounter()]
-
     def programCounter(self):
-        return self.registers["$pc"].getValue()
+        return self.getRegister("$pc")
+
+    def suspend(self):
+        state = copy.deepcopy(self)
+        state.is_suspended = True
+        return state
+
+    def incrementAndSuspend(self):
+        return self.incrementProgramCounter().suspend()
 
     def incrementProgramCounter(self):
-        current_val = self.programCounter()
-        self.setRegister("$pc", current_val + 1)
+        current_val = self.getRegister("$pc")
+        return self.setRegister("$pc", current_val + 1)
 
     def setRegister(self, reg, val):
-        self.registers[reg].setValue(val)
+        state = copy.deepcopy(self)
+        state.registers[reg].setValue(val)
+        return state
 
     def getRegister(self, reg):
         return self.registers[reg].getValue()

@@ -1,5 +1,6 @@
 from Mipper.bool_ops import Branch
 import logging
+import copy
 
 logging.basicConfig(level=logging.DEBUG,
                     format="%(levelname)s %(message)s",
@@ -14,8 +15,10 @@ class LA:
         return "LA " + self.dst + " " + self.label_ref
 
     def execute(self, state):
+        state = copy.deepcopy(state)
         idx = state.labels[self.label_ref]
         state.setRegister(self.dst, idx)
+        return state
 
 class LI:
     def __init__(self, dst, im):
@@ -26,7 +29,7 @@ class LI:
         return "LI " + self.dst + " " + str(self.im)
 
     def execute(self, state):
-        state.setRegister(self.dst, self.im)
+        return state.setRegister(self.dst, self.im)
 
 class MOVE:
     def __init__(self, dst, src):
@@ -37,7 +40,7 @@ class MOVE:
         return "MOVE " + self.dst + " " + self.src
 
     def execute(self, state):
-        state.setRegister(self.dst, state.getRegister(self.src))
+        return state.setRegister(self.dst, state.getRegister(self.src))
 
 class BGT(Branch):
     def __init__(self, reg1, reg2, label_ref):

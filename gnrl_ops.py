@@ -1,6 +1,7 @@
 import logging
+import copy
 
-class JUMP:
+class JUMP(object):
     def __init__(self, label_ref):
         self.label_ref = label_ref
 
@@ -8,9 +9,9 @@ class JUMP:
         return "JUMP to " + self.label_ref
 
     def execute(self, state):
-        state.setRegister("$pc", state.instructions.index(self.label_ref))
+        return state.setRegister("$pc", state.instructions.index(self.label_ref))
 
-class JAL:
+class JAL(object):
     def __init__(self, label_ref):
         self.label_ref = label_ref
 
@@ -18,11 +19,12 @@ class JAL:
         return "JAL to " + self.label_ref
 
     def execute(self, state):
-        state.setRegister("$ra", state.programCounter())
+        state = state.setRegister("$ra", state.programCounter())
         jump_position = state.instructions.index(self.label_ref)
-        state.setRegister("$pc", jump_position)
+        state = state.setRegister("$pc", jump_position)
+        return state
 
-class JR:
+class JR(object):
     def __init__(self, return_reg):
         self.return_reg = return_reg
 
@@ -32,9 +34,11 @@ class JR:
     def execute(self, state):
         jump_position = state.getRegister(self.return_reg)
         if jump_position != -1:
-            state.setRegister("$pc", jump_position)
+            return state.setRegister("$pc", jump_position)
+        else:
+            return state
 
-class MFHI:
+class MFHI(object):
     def __init__(self, dst):
         self.dst = dst
 
@@ -43,9 +47,9 @@ class MFHI:
 
     def execute(self, state):
         val = state.getRegister("$hi")
-        state.setRegister(self.dst, val)
+        return state.setRegister(self.dst, val)
 
-class MFLO:
+class MFLO(object):
     def __init__(self, dst):
         self.dst = dst
 
@@ -54,9 +58,9 @@ class MFLO:
 
     def execute(self, state):
         val = state.getRegister("$lo")
-        state.setRegister(self.dst, val)
+        return state.setRegister(self.dst, val)
 
-class LW:
+class LW(object):
     def __init__(self, dst, indirect_address):
         self.dst = dst
         self.offset = indirect_address[0]
@@ -66,6 +70,7 @@ class LW:
         return "LW " + self.dst + " " + self.offset + " " + self.base_register
 
     def execute(self, state):
+        state = copy.deepcopy(state)
         idx = -1
         base = state.getRegister(self.base_register)
         if type(self.offset) is str:
@@ -73,9 +78,9 @@ class LW:
         else:
             idx = self.offset + (base / 4)
         state.setRegister(self.dst, state.memory[idx])
+        return state
 
-
-class SW:
+class SW(object):
     def __init__(self, src, indirect_address):
         self.src = src
         self.offset = indirect_address[0]
@@ -85,6 +90,7 @@ class SW:
         return "SW " + self.src  + " " + self.offset + " " + self.base_register
 
     def execute(self, state):
+        state = copy.deepcopy(state)
         idx = -1
         base = state.getRegister(self.base_register)
         if type(self.offset) is str:
@@ -93,8 +99,9 @@ class SW:
             idx = self.offset + (base / 4)
         val = state.getRegister(self.src)
         state.memory[idx] = val
+        return state
 
-class SYSCALL:
+class SYSCALL(object):
     def __init__(self): pass
 
     def __str__(self):
@@ -102,24 +109,27 @@ class SYSCALL:
 
     def execute(self, state):
         sysval = state.getRegister("$v0")
-        { 1 : self.print_integer,
-          2 : self.print_float,
-          3 : self.print_double,
-          4 : self.print_string,
-          5 : self.read_integer,
-          6 : self.read_float,
-          7 : self.read_double,
-          8 : self.read_string }[sysval](state)
+        return { 1 : self.print_integer,
+                 2 : self.print_float,
+                 3 : self.print_double,
+                 4 : self.print_string,
+                 5 : self.read_integer,
+                 6 : self.read_float,
+                 7 : self.read_double,
+                 8 : self.read_string }[sysval](state)
 
     def print_integer(self, state):
         val = state.getRegister("$a0")
-        print str(val),
+        state._out(val)
+        return state
 
     def print_float(self, state):
-        print state.getRegister("$f12")
+        state._out(state.getRegiser("$f12"))
+        return state
 
     def print_double(state):
-        print state.getRegister("$f12")
+        state._out(state.getRegister("$f12"))
+        return state
 
     def print_string(self, state):
         idx = state.getRegister("$a0")
@@ -129,26 +139,29 @@ class SYSCALL:
                 val += c
             else:
                 break
-        print val,
+        state._out(val)
+        return state
 
     def read_integer(self, state):
-        state.setRegister("$v0", int(raw_input()))
+        return state.setRegister("$v0", int(state._in()))
 
     def read_float(self, state):
-        state.setRegister("$f0", float(raw_input()))
+        return state.setRegister("$f0", float(state._in()))
 
     def read_double(self, state):
-        state.setRegister("$f0", float(raw_input()))
+        return state.setRegister("$f0", float(state._in()))
 
     def read_string(self, state):
-        x = raw_input("")
+        state = copy.deepcopy(state)
+        x = state._in()
         idx = state.getRegister("$a0")
         length = state.getRegister("$a1")
         for i in range(0, min(length, len(x))):
             state.memory[idx + i] = x[i]
         state.memory[idx + min(length, len(x))] = "\0"
+        return state
 
-class CREATE_STRING:
+class CREATE_STRING(object):
     def __init__(self, label,  ascii_string):
         self.label = label
         self.ascii_string = ascii_string.replace('"', '') + "\0"
@@ -157,11 +170,13 @@ class CREATE_STRING:
         return "CREATE_STRING " + self.label + " " + self.ascii_string
 
     def allocate(self, state):
+        state = copy.deepcopy(state)
         idx = len(state.memory)
         state.memory.extend(self.ascii_string)
         state.labels.update([[self.label, idx]])
+        return state
 
-class CREATE_SPACE:
+class CREATE_SPACE(object):
     def __init__(self, label, size):
         self.label = label
         self.size = size
@@ -170,9 +185,11 @@ class CREATE_SPACE:
         return "CREATE_SPACE " + self.label + " " + self.size
 
     def allocate(self, state):
+        state = copy.deepcopy(state)
         if not (self.size % 4 == 0): raise "word addressing only at this time"
 
         array = map(lambda x : 0, range(0, self.size / 4))
         idx = len(state.memory)
         state.memory.extend(array)
         state.labels.update([[self.label, idx]])
+        return state

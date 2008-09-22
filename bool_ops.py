@@ -68,7 +68,9 @@ class Branch:
 
         if self.test_fn(val1, val2):
             jump_position = state.instructions.index(self.label_ref)
-            state.setRegister("$pc", jump_position)
+            return state.setRegister("$pc", jump_position)
+        else:
+            return state
 
 class BEQ(Branch):
     def __init__(self, reg1, reg2, label_ref):

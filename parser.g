@@ -16,7 +16,7 @@ parser MipsParser:
     token END: "$"
     token NUM: '-?[0-9]+'
     token HEX: '0x[0-9]+'
-    token REGISTER: '\$(gp|sp|fp|ra|v[0-1]|a[0-3]|t[0-9]|s[0-7]|k[0-1]|zero)'
+    token REGISTER: '\$(gp|sp|fp|ra|v[0-1]|a[0-3]|t[0-9]|s[0-7]|k[0-1]|zero|[0-9]+)'
     token LABEL: '\\w+:'
     token LABEL_REF: '\\w+'
     token SYSTEM_CALL: 'syscall'
@@ -29,20 +29,23 @@ parser MipsParser:
     rule empty_line: end_line
 
     rule program: empty_line*
-                  (data text {{ ret = data, text }} |
-                   text data {{ ret = data, text }}) END {{ return ret }}
+                  (data {{ ret = data }} |
+                   text {{ ret = text }}) END {{ return ret }}
 
     rule data: ".data\n" {{ allocations = [] }}
-               (allocation {{ allocations.append(allocation) }} |
-                empty_line)*
-               {{ return allocations }}
+                         {{ instructions = [] }}
+                         (allocation {{ allocations.append(allocation) }} |
+                          empty_line)* (text {{ instructions = text[1] }})?
+                          {{ return allocations, instructions }}
 
-    rule text: ".text\n" {{ lines = [] }}
-                       (statement {{ append_or_extend(lines, statement) }} |
-                        LABEL end_line {{ lines.append(LABEL.strip(':')) }} |
-                        SYSTEM_CALL end_line {{ lines.append(SYSCALL()) }} |
-                        BREAK "\n" {{ lines.append(BREAK) }} | empty_line )+
-                        {{ return lines }}
+    rule text: ".text\n" {{ instructions = [] }}
+                         {{ allocations = [] }}
+                       (statement {{ append_or_extend(instructions, statement) }} |
+                        LABEL end_line {{ instructions.append(LABEL.strip(':')) }} |
+                        SYSTEM_CALL end_line {{ instructions.append(SYSCALL()) }} |
+                        BREAK "\n" {{ instructions.append(BREAK) }} | empty_line )+
+                        (data {{ allocations = data[0] }})?
+                        {{ return allocations, instructions }}
 
     rule allocation: LABEL (allocate_asciiz {{ f = allocate_asciiz }} |
                             allocate_space {{ f = allocate_space }}) end_line

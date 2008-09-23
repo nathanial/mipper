@@ -73,26 +73,40 @@ class Program:
 
 class State:
     def __init__(self, instructions, allocations):
-        regs = ["$at", "$gp", "$sp" "$fp", "$ra",
-                "$zero", "$hi", "$lo", "$pc"]
-        regs.extend(self.create_registers("$v", 1))
-        regs.extend(self.create_registers("$a", 3))
-        regs.extend(self.create_registers("$t", 9))
-        regs.extend(self.create_registers("$s", 7))
-        regs.extend(self.create_registers("$k", 1))
-        regs.extend(self.create_registers("$f", 12))
-        self.registers = dict(map(lambda reg: [reg, Register()], regs))
-        self.registers["$ra"].setValue(-1)
+        self.registers = {}
+        self.create_register("$zero", at = 0)
+        self.create_register("$at", at = 1)
+        self.create_registers("$v", _from = 2, _to = 3)
+        self.create_registers("$a", _from = 4, _to = 7)
+        self.create_registers("$t", _from = 8, _to = 15)
+        self.create_registers("$s", _from = 16, _to = 23)
+        self.create_registers("$t", numeral = 8, _from = 24, _to = 25)
+        self.create_registers("$k", _from = 26, _to = 27)
+        self.create_register("$gp", at = 28)
+        self.create_register("$sp", at = 29)
+        self.create_register("$fp", at = 30)
+        self.create_register("$ra", at = 31)
+        self.create_register("$pc")
+        self.create_register("$hi")
+        self.create_register("$lo")
+
+        self.setRegister("$ra", -1)
         self.instructions = instructions
         self.allocations = allocations
         self.memory = []
         self.labels = {}
 
-    def create_registers(self, prefix, n):
-        regs = []
-        for i in range(0, n + 1):
-            regs.append(prefix + str(i))
-        return regs
+
+    def create_register(self, name, at = -1):
+        reg = Register()
+        self.registers.update([[name, reg], ["$" + str(at), reg]])
+
+    def create_registers(self, prefix, _from, _to, numeral = 0):
+        for i in range(_from, _to + 1):
+            offset = i - _from
+            name = prefix + str(numeral + offset)
+            reg = Register()
+            self.registers.update([[name, reg], ["$" + str(i), reg]])
 
     def hasNextInstruction(self):
         return self.programCounter() < len(self.instructions)

@@ -40,7 +40,7 @@ class ANDI(object):
         self.im = im
 
     def __str__(self):
-        return "ANDI " + self.dst + " " + self.reg + " " + self.im
+        return "ANDI " + self.dst + " " + self.reg + " " + str(self.im)
 
     execute = AssignmentImmediate("dst", "reg", "im")(land)
 
@@ -51,7 +51,7 @@ class ORI(object):
         self.im = im
 
     def __str__(self):
-        return "ORI " + self.dst + " " + self.reg + " " + self.im
+        return "ORI " + self.dst + " " + self.reg + " " + str(self.im)
 
     execute = AssignmentImmediate("dst", "reg", "im")(lor)
 

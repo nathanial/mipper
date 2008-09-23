@@ -64,7 +64,7 @@ class MipsParserScanner(yappsrt.Scanner):
         ('END', re.compile('$')),
         ('NUM', re.compile('-?[0-9]+')),
         ('HEX', re.compile('0x[0-9]+')),
-        ('REGISTER', re.compile('\\$(gp|sp|fp|ra|v[0-1]|a[0-3]|t[0-9]|s[0-7]|k[0-1]|zero)')),
+        ('REGISTER', re.compile('\\$(gp|sp|fp|ra|v[0-1]|a[0-3]|t[0-9]|s[0-7]|k[0-1]|zero|[0-9]+)')),
         ('LABEL', re.compile('\\w+:')),
         ('LABEL_REF', re.compile('\\w+')),
         ('SYSTEM_CALL', re.compile('syscall')),
@@ -98,12 +98,10 @@ class MipsParser(yappsrt.Parser):
         _token = self._peek('".data\\n"', '".text\\n"')
         if _token == '".data\\n"':
             data = self.data(_context)
-            text = self.text(_context)
-            ret = data, text
+            ret = data
         else: # == '".text\\n"'
             text = self.text(_context)
-            data = self.data(_context)
-            ret = data, text
+            ret = text
         END = self._scan('END')
         return ret
 
@@ -111,42 +109,50 @@ class MipsParser(yappsrt.Parser):
         _context = self.Context(_parent, self._scanner, self._pos, 'data', [])
         self._scan('".data\\n"')
         allocations = []
-        while self._peek('"\\n"', 'COMMENT', 'LABEL', 'SYSTEM_CALL', 'BREAK', '".data\\n"', '".text\\n"', 'END', '"j"', '"jal"', '"jr"', '"mfhi"', '"mflo"', '"lw"', '"sw"', '"add"', '"sub"', '"addu"', '"addi"', '"addiu"', '"subu"', '"div"', '"divu"', '"mult"', '"and"', '"or"', '"andi"', '"ori"', '"beq"', '"bne"', '"slt"', '"slti"', '"sltu"', '"sltiu"', '"la"', '"li"', '"move"', '"bgt"', '"blt"', '"bge"', '"ble"', '"bgtu"', '"bgtz"') in ['"\\n"', 'COMMENT', 'LABEL']:
+        instructions = []
+        while self._peek('"\\n"', 'COMMENT', '".text\\n"', 'LABEL', 'SYSTEM_CALL', 'BREAK', '".data\\n"', '"j"', '"jal"', '"jr"', '"mfhi"', '"mflo"', '"lw"', '"sw"', '"add"', '"sub"', '"addu"', '"addi"', '"addiu"', '"subu"', '"div"', '"divu"', '"mult"', '"and"', '"or"', '"andi"', '"ori"', '"beq"', '"bne"', '"slt"', '"slti"', '"sltu"', '"sltiu"', '"la"', '"li"', '"move"', '"bgt"', '"blt"', '"bge"', '"ble"', '"bgtu"', '"bgtz"', 'END') in ['"\\n"', 'COMMENT', 'LABEL']:
             _token = self._peek('"\\n"', 'COMMENT', 'LABEL')
             if _token == 'LABEL':
                 allocation = self.allocation(_context)
                 allocations.append(allocation)
             else: # in ['"\\n"', 'COMMENT']
                 empty_line = self.empty_line(_context)
-        if self._peek() not in ['"\\n"', 'COMMENT', 'LABEL', 'SYSTEM_CALL', 'BREAK', '".data\\n"', '".text\\n"', 'END', '"j"', '"jal"', '"jr"', '"mfhi"', '"mflo"', '"lw"', '"sw"', '"add"', '"sub"', '"addu"', '"addi"', '"addiu"', '"subu"', '"div"', '"divu"', '"mult"', '"and"', '"or"', '"andi"', '"ori"', '"beq"', '"bne"', '"slt"', '"slti"', '"sltu"', '"sltiu"', '"la"', '"li"', '"move"', '"bgt"', '"blt"', '"bge"', '"ble"', '"bgtu"', '"bgtz"']:
-            raise yappsrt.SyntaxError(charpos=self._scanner.get_prev_char_pos(), context=_context, msg='Need one of ' + ', '.join(['"\\n"', 'COMMENT', 'LABEL', 'SYSTEM_CALL', 'BREAK', '".data\\n"', '".text\\n"', 'END', '"j"', '"jal"', '"jr"', '"mfhi"', '"mflo"', '"lw"', '"sw"', '"add"', '"sub"', '"addu"', '"addi"', '"addiu"', '"subu"', '"div"', '"divu"', '"mult"', '"and"', '"or"', '"andi"', '"ori"', '"beq"', '"bne"', '"slt"', '"slti"', '"sltu"', '"sltiu"', '"la"', '"li"', '"move"', '"bgt"', '"blt"', '"bge"', '"ble"', '"bgtu"', '"bgtz"']))
-        return allocations
+        if self._peek() not in ['"\\n"', 'COMMENT', '".text\\n"', 'LABEL', 'SYSTEM_CALL', 'BREAK', '".data\\n"', '"j"', '"jal"', '"jr"', '"mfhi"', '"mflo"', '"lw"', '"sw"', '"add"', '"sub"', '"addu"', '"addi"', '"addiu"', '"subu"', '"div"', '"divu"', '"mult"', '"and"', '"or"', '"andi"', '"ori"', '"beq"', '"bne"', '"slt"', '"slti"', '"sltu"', '"sltiu"', '"la"', '"li"', '"move"', '"bgt"', '"blt"', '"bge"', '"ble"', '"bgtu"', '"bgtz"', 'END']:
+            raise yappsrt.SyntaxError(charpos=self._scanner.get_prev_char_pos(), context=_context, msg='Need one of ' + ', '.join(['"\\n"', 'COMMENT', 'LABEL', '".text\\n"', 'SYSTEM_CALL', 'BREAK', '".data\\n"', '"j"', '"jal"', '"jr"', '"mfhi"', '"mflo"', '"lw"', '"sw"', '"add"', '"sub"', '"addu"', '"addi"', '"addiu"', '"subu"', '"div"', '"divu"', '"mult"', '"and"', '"or"', '"andi"', '"ori"', '"beq"', '"bne"', '"slt"', '"slti"', '"sltu"', '"sltiu"', '"la"', '"li"', '"move"', '"bgt"', '"blt"', '"bge"', '"ble"', '"bgtu"', '"bgtz"', 'END']))
+        if self._peek('".text\\n"', 'END') == '".text\\n"':
+            text = self.text(_context)
+            instructions = text[1]
+        return allocations, instructions
 
     def text(self, _parent=None):
         _context = self.Context(_parent, self._scanner, self._pos, 'text', [])
         self._scan('".text\\n"')
-        lines = []
+        instructions = []
+        allocations = []
         while 1:
             _token = self._peek('LABEL', 'SYSTEM_CALL', 'BREAK', '"\\n"', 'COMMENT', '"j"', '"jal"', '"jr"', '"mfhi"', '"mflo"', '"lw"', '"sw"', '"add"', '"sub"', '"addu"', '"addi"', '"addiu"', '"subu"', '"div"', '"divu"', '"mult"', '"and"', '"or"', '"andi"', '"ori"', '"beq"', '"bne"', '"slt"', '"slti"', '"sltu"', '"sltiu"', '"la"', '"li"', '"move"', '"bgt"', '"blt"', '"bge"', '"ble"', '"bgtu"', '"bgtz"')
             if _token not in ['LABEL', 'SYSTEM_CALL', 'BREAK', '"\\n"', 'COMMENT']:
                 statement = self.statement(_context)
-                append_or_extend(lines, statement)
+                append_or_extend(instructions, statement)
             elif _token == 'LABEL':
                 LABEL = self._scan('LABEL')
                 end_line = self.end_line(_context)
-                lines.append(LABEL.strip(':'))
+                instructions.append(LABEL.strip(':'))
             elif _token == 'SYSTEM_CALL':
                 SYSTEM_CALL = self._scan('SYSTEM_CALL')
                 end_line = self.end_line(_context)
-                lines.append(SYSCALL())
+                instructions.append(SYSCALL())
             elif _token == 'BREAK':
                 BREAK = self._scan('BREAK')
                 self._scan('"\\n"')
-                lines.append(BREAK)
+                instructions.append(BREAK)
             else: # in ['"\\n"', 'COMMENT']
                 empty_line = self.empty_line(_context)
             if self._peek('LABEL', 'SYSTEM_CALL', 'BREAK', '"\\n"', 'COMMENT', '"j"', '"jal"', '"jr"', '"mfhi"', '"mflo"', '"lw"', '"sw"', '"add"', '"sub"', '"addu"', '"addi"', '"addiu"', '"subu"', '"div"', '"divu"', '"mult"', '"and"', '"or"', '"andi"', '"ori"', '"beq"', '"bne"', '"slt"', '"slti"', '"sltu"', '"sltiu"', '"la"', '"li"', '"move"', '"bgt"', '"blt"', '"bge"', '"ble"', '"bgtu"', '"bgtz"', '".data\\n"', '".text\\n"', 'END') not in ['LABEL', 'SYSTEM_CALL', 'BREAK', '"\\n"', 'COMMENT', '"j"', '"jal"', '"jr"', '"mfhi"', '"mflo"', '"lw"', '"sw"', '"add"', '"sub"', '"addu"', '"addi"', '"addiu"', '"subu"', '"div"', '"divu"', '"mult"', '"and"', '"or"', '"andi"', '"ori"', '"beq"', '"bne"', '"slt"', '"slti"', '"sltu"', '"sltiu"', '"la"', '"li"', '"move"', '"bgt"', '"blt"', '"bge"', '"ble"', '"bgtu"', '"bgtz"']: break
-        return lines
+        if self._peek('".data\\n"', 'END') == '".data\\n"':
+            data = self.data(_context)
+            allocations = data[0]
+        return allocations, instructions
 
     def allocation(self, _parent=None):
         _context = self.Context(_parent, self._scanner, self._pos, 'allocation', [])

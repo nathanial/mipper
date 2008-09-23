@@ -20,11 +20,11 @@ class ProgramFactory:
         self.output = output
         self.on_suspension = on_suspension
 
-    def create_program(self, text):
+    def create_program(self, text, **kwargs):
         program = Program(text)
-        program.state._in = self.input
-        program.state._out = self.output
-        program.on_suspension = self.on_suspension
+        program.state._in = kwargs.get('input') or self.input
+        program.state._out = kwargs.get('output') or self.output
+        program.on_suspension = kwargs.get('on_suspension') or self.on_suspension
         return program
 
 class Program:

@@ -1,13 +1,32 @@
 from Mipper.helpers import AssignmentOp, AssignmentImmediate, AssignHiLo
 
+class OverflowException: pass
+
+max_int = 2147483647
+
 def checkOverflow(val):
     if type(val) is long:
-        raise "overflow exception"
+        raise OverflowException()
 
 def checked(meth):
     def f(val1, val2):
         result = meth(val1, val2)
         checkOverflow(result)
+        return result
+    return f
+
+def unchecked(meth):
+    def f(val1, val2):
+        result = meth(val1, val2)
+        try:
+            checkOverflow(result)
+        except OverflowException:
+            overflow = result % max_int
+            if result > 0:
+                result = overflow - max_int - 2
+            else:
+                result = overflow + max_int + 2
+            result = result.__int__()
         return result
     return f
 
@@ -55,7 +74,7 @@ class ADDU(object):
     def __str__(self):
         return "ADDU " + self.dst + " " + self.reg1 + " " + self.reg2
 
-    execute = AssignmentOp("dst", "reg1", "reg2")(add)
+    execute = AssignmentOp("dst", "reg1", "reg2")(unchecked(add))
 
 class ADDI(object):
     def __init__(self, dst, reg, im):
@@ -77,7 +96,7 @@ class ADDIU(object):
     def __str__(self):
         return "ADDIU " + self.dst + " " + self.reg + " " + str(self.im)
 
-    execute = AssignmentImmediate("dst", "reg", "im")(add)
+    execute = AssignmentImmediate("dst", "reg", "im")(unchecked(add))
 
 class SUBU(object):
     def __init__(self, dst, reg1, reg2):
@@ -88,7 +107,7 @@ class SUBU(object):
     def __str__(self):
         return "SUBU " + self.dst + " " + self.reg1 + " " + self.reg2
 
-    execute = AssignmentOp("dst", "reg1", "reg2")(sub)
+    execute = AssignmentOp("dst", "reg1", "reg2")(unchecked(sub))
 
 class DIV(object):
     def __init__(self, reg1, reg2):
@@ -98,7 +117,7 @@ class DIV(object):
     def __str__(self):
         return "DIV " + self.reg1 + " " + self.reg2
 
-    execute = AssignHiLo("reg1", "reg2")(div)
+    execute = AssignHiLo("reg1", "reg2")(unchecked(div))
 
 class DIVU(object):
     def __init__(self, reg1, reg2):
@@ -108,7 +127,7 @@ class DIVU(object):
     def __str__(self):
         return "DIVU " + self.reg1 + " " + self.reg2
 
-    execute = AssignHiLo("reg1", "reg2")(div)
+    execute = AssignHiLo("reg1", "reg2")(unchecked(div))
 
 class MULT(object):
     def __init__(self, reg1,reg2):
@@ -118,7 +137,7 @@ class MULT(object):
     def __str__(self):
         return "MULT " + self.reg1 + " " + self.reg2
 
-    execute = AssignHiLo("reg1", "reg2")(mult)
+    execute = AssignHiLo("reg1", "reg2")(unchecked(mult))
 
 
 

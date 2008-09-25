@@ -118,7 +118,7 @@ class SYSCALL:
     def print_float(self, state):
         state._out(state.getRegister("$12"))
 
-    def print_double(state):
+    def print_double(self, state):
         state._out(state.getRegister("$f12"))
 
     def print_string(self, state):

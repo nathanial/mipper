@@ -656,7 +656,7 @@ class MipsParser(yappsrt.Parser):
         self._scan('","')
         LABEL_REF = self._scan('LABEL_REF')
         lref = LABEL_REF
-        return BNE(reg1, reg2, label_ref)
+        return BNE(reg1, reg2, lref
 
     def slt_op(self, _parent=None):
         _context = self.Context(_parent, self._scanner, self._pos, 'slt_op', [])

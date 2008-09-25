@@ -256,7 +256,7 @@ parser MipsParser:
                  REGISTER {{ reg1 = REGISTER }} ","
                  REGISTER {{ reg2 = REGISTER }} ","
                  LABEL_REF {{ lref = LABEL_REF }}
-                 {{ return BNE(reg1, reg2, lref }}
+                 {{ return BNE(reg1, reg2, lref) }}
 
     rule slt_op: "slt"
                  REGISTER {{ dst = REGISTER }} ","

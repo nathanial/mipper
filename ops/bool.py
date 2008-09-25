@@ -1,4 +1,4 @@
-from Mipper.helpers import AssignmentOp, AssignmentImmediate, AssignHiLo
+from mipper.helpers import AssignmentOp, AssignmentImmediate, AssignHiLo
 
 
 def land(val1, val2):

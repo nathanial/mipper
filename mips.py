@@ -1,5 +1,5 @@
 import logging
-from Mipper import parser
+import parser
 
 logging.basicConfig(level=logging.DEBUG,
                     format='%(levelname)s %(message)s',
@@ -13,6 +13,10 @@ class Register:
     def __cmp__(self, that): return self.value.__cmp__(that)
     def setValue(self, value): self.value = value
     def getValue(self): return self.value
+    def __str__(self):
+        return str(self.value)
+    def __repr__(self):
+        return str(self.value)
 
 class ProgramFactory:
     def __init__(self, input, output, on_suspension):
@@ -61,6 +65,8 @@ class Program:
             logging.debug("executing " + str(instruction))
             instruction.execute(self.state)
             self.state.incrementProgramCounter()
+            # instructions rely on value of programCounter()
+            # increment only after instruction.execute
 
     def suspendExecution(self):
         raise ProgramSuspension()

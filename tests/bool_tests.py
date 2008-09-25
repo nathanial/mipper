@@ -1,6 +1,6 @@
 import unittest
-from Mipper.mipper import State
-from Mipper.bool_ops import *
+from mipper.mips import State
+from mipper.ops.bool import *
 
 class TestBoolOperations(unittest.TestCase):
     def setUp(self):

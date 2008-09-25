@@ -1,8 +1,8 @@
-from Mipper.mipper import *
-from Mipper.gnrl_ops import *
-from Mipper.math_ops import *
-from Mipper.bool_ops import *
-from Mipper.pseudo_ops import *
+from mips import *
+from ops.gnrl import *
+from ops.math import *
+from ops.bool import *
+from ops.pseudo import *
 
 def append_or_extend(lines, addend):
     if type(addend) is list:

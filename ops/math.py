@@ -1,12 +1,12 @@
-from Mipper.helpers import AssignmentOp, AssignmentImmediate, AssignHiLo
+from mipper.helpers import AssignmentOp, AssignmentImmediate, AssignHiLo
 
-class OverflowException: pass
+class MipsOverflowException: pass
 
 max_int = 2147483647
 
 def checkOverflow(val):
     if type(val) is long:
-        raise OverflowException()
+        raise MipsOverflowException()
 
 def checked(meth):
     def f(val1, val2):
@@ -20,7 +20,7 @@ def unchecked(meth):
         result = meth(val1, val2)
         try:
             checkOverflow(result)
-        except OverflowException:
+        except MipsOverflowException:
             overflow = result % max_int
             if result > 0:
                 result = overflow - max_int - 2

@@ -1,6 +1,6 @@
 import unittest
-from Mipper.mipper import State
-from Mipper.math_ops import *
+from mipper.mips import State
+from mipper.ops.math import *
 
 max_int = 2147483647
 

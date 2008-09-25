@@ -1,12 +1,12 @@
 from __future__ import with_statement
 import parser
-from mipper import Program, ProgramFactory
+from mipper.mips import Program, ProgramFactory
 from unittest import TestSuite, TestLoader, TestResult, TestCase, TextTestRunner
-from Mipper.gnrl_tests import TestGeneralOperations
-from Mipper.bool_tests import TestBoolOperations
-from Mipper.math_tests import TestMathOperations
-from Mipper.pseudo_tests import TestPseudoOperations
-from Mipper.integration_tests import IntegrationTests
+from gnrl_tests import TestGeneralOperations
+from bool_tests import TestBoolOperations
+from math_tests import TestMathOperations
+from pseudo_tests import TestPseudoOperations
+from integration_tests import IntegrationTests
 
 runner = TextTestRunner()
 

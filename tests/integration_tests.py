@@ -1,6 +1,6 @@
 from __future__ import with_statement
 import parser
-from mipper import Program, ProgramFactory
+from mipper.mips import Program, ProgramFactory
 import unittest
 from unittest import TestSuite, TestLoader, TestResult, TestCase
 
@@ -72,6 +72,7 @@ class IntegrationTests(TestCase):
 
         comp_prog = program_factory.create_program(comp_text)
         comp_prog.execute()
+        self.assertEqual(comp_prog.state.getRegister("$10"), 5)
 
 
 if __name__ == '__main__':

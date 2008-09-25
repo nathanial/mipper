@@ -1,6 +1,6 @@
 import unittest
-from Mipper.mipper import State
-from Mipper.pseudo_ops import *
+from mipper.mips import State
+from mipper.ops.pseudo import *
 
 class TestPseudoOperations(unittest.TestCase):
     def setUp(self):

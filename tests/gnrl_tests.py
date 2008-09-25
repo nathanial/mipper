@@ -1,6 +1,6 @@
 import unittest
-from Mipper.mipper import State
-from Mipper.gnrl_ops import *
+from mipper.mips import State
+from mipper.ops.gnrl import *
 
 class TestGeneralOperations(unittest.TestCase):
     def setUp(self):

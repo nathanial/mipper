@@ -15,7 +15,7 @@ class LA:
 
     def execute(self, state):
         idx = state.labels[self.label_ref]
-        state.setRegister(self.dst, idx)
+        state.set_register(self.dst, idx)
 
 class LI:
     def __init__(self, dst, im):
@@ -26,7 +26,7 @@ class LI:
         return "LI " + self.dst + " " + str(self.im)
 
     def execute(self, state):
-        state.setRegister(self.dst, self.im)
+        state.set_register(self.dst, self.im)
 
 class MOVE:
     def __init__(self, dst, src):
@@ -37,7 +37,7 @@ class MOVE:
         return "MOVE " + self.dst + " " + self.src
 
     def execute(self, state):
-        state.setRegister(self.dst, state.getRegister(self.src))
+        state.set_register(self.dst, state.register(self.src))
 
 class BGT(Branch):
     def __init__(self, reg1, reg2, label_ref):

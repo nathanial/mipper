@@ -10,46 +10,46 @@ class TestGeneralOperations(unittest.TestCase):
     def testJUMP(self):
         op = JUMP("x")
         op.execute(self.state)
-        result = self.state.programCounter()
+        result = self.state.program_counter()
         self.assertEqual(result, 3)
 
     def testJAL(self):
-        prior_val = self.state.programCounter()
+        prior_val = self.state.program_counter()
         op = JAL("c")
         op.execute(self.state)
-        program_counter = self.state.programCounter()
-        return_register = self.state.getRegister("$ra")
+        program_counter = self.state.program_counter()
+        return_register = self.state.register("$ra")
         self.assertEqual(program_counter, 2)
         self.assertEqual(return_register, prior_val)
 
     def testJR(self):
-        self.state.setRegister("$ra", 44)
+        self.state.set_register("$ra", 44)
         op = JR("$ra")
         op.execute(self.state)
-        self.assertEqual(self.state.programCounter(), 44)
+        self.assertEqual(self.state.program_counter(), 44)
 
     def testMFHI(self):
-        self.state.setRegister("$hi", 22)
+        self.state.set_register("$hi", 22)
         op = MFHI("$t0")
         op.execute(self.state)
-        result = self.state.getRegister("$t0")
+        result = self.state.register("$t0")
         self.assertEqual(result, 22)
 
     def testMFLO(self):
-        self.state.setRegister("$lo", 88)
+        self.state.set_register("$lo", 88)
         op = MFLO("$t0")
         op.execute(self.state)
-        result = self.state.getRegister("$t0")
+        result = self.state.register("$t0")
         self.assertEqual(result, 88)
 
     def testLW(self):
         op = LW("$t0", (1, "$zero"))
         op.execute(self.state)
-        result = self.state.getRegister("$t0")
+        result = self.state.register("$t0")
         self.assertEqual(result, 1)
 
     def testSW(self):
-        self.state.setRegister("$t0", 22)
+        self.state.set_register("$t0", 22)
         op = SW("$t0", (2, "$zero"))
         op.execute(self.state)
         result = self.state.memory[2]

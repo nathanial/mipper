@@ -72,7 +72,7 @@ class IntegrationTests(TestCase):
 
         comp_prog = program_factory.create_program(comp_text)
         comp_prog.execute()
-        self.assertEqual(comp_prog.state.getRegister("$10"), 5)
+        self.assertEqual(comp_prog.state.register("$10"), 5)
 
 
 if __name__ == '__main__':

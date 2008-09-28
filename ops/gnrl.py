@@ -8,7 +8,7 @@ class JUMP:
         return "JUMP to " + self.label_ref
 
     def execute(self, state):
-        state.setRegister("$pc", state.instructions.index(self.label_ref))
+        state.set_register("$pc", state.instructions.index(self.label_ref))
 
 class JAL:
     def __init__(self, label_ref):
@@ -18,9 +18,9 @@ class JAL:
         return "JAL to " + self.label_ref
 
     def execute(self, state):
-        state.setRegister("$ra", state.programCounter())
+        state.set_register("$ra", state.program_counter())
         jump_position = state.instructions.index(self.label_ref)
-        state.setRegister("$pc", jump_position)
+        state.set_register("$pc", jump_position)
 
 class JR:
     def __init__(self, return_reg):
@@ -30,9 +30,9 @@ class JR:
         return "JR " + self.return_reg
 
     def execute(self, state):
-        jump_position = state.getRegister(self.return_reg)
+        jump_position = state.register(self.return_reg)
         if jump_position != -1:
-            state.setRegister("$pc", jump_position)
+            state.set_register("$pc", jump_position)
 
 class MFHI:
     def __init__(self, dst):
@@ -42,8 +42,8 @@ class MFHI:
         return "MFHI " + self.dst
 
     def execute(self, state):
-        val = state.getRegister("$hi")
-        state.setRegister(self.dst, val)
+        val = state.register("$hi")
+        state.set_register(self.dst, val)
 
 class MFLO:
     def __init__(self, dst):
@@ -53,8 +53,8 @@ class MFLO:
         return "MFLO " + self.dst
 
     def execute(self, state):
-        val = state.getRegister("$lo")
-        state.setRegister(self.dst, val)
+        val = state.register("$lo")
+        state.set_register(self.dst, val)
 
 class LW:
     def __init__(self, dst, indirect_address):
@@ -67,12 +67,12 @@ class LW:
 
     def execute(self, state):
         idx = -1
-        base = state.getRegister(self.base_register)
+        base = state.register(self.base_register)
         if type(self.offset) is str:
             idx = state.labels[self.offset] + (base / 4)
         else:
             idx = self.offset + (base / 4)
-        state.setRegister(self.dst, state.memory[idx])
+        state.set_register(self.dst, state.memory[idx])
 
 
 class SW:
@@ -86,12 +86,12 @@ class SW:
 
     def execute(self, state):
         idx = -1
-        base = state.getRegister(self.base_register)
+        base = state.register(self.base_register)
         if type(self.offset) is str:
             idx = state.labels[self.offset] + (base / 4)
         else:
             idx = self.offset + (base / 4)
-        val = state.getRegister(self.src)
+        val = state.register(self.src)
         state.memory[idx] = val
 
 class SYSCALL:
@@ -101,7 +101,7 @@ class SYSCALL:
         return "SYSCALL"
 
     def execute(self, state):
-        sysval = state.getRegister("$v0")
+        sysval = state.register("$v0")
         { 1 : self.print_integer,
           2 : self.print_float,
           3 : self.print_double,
@@ -112,17 +112,17 @@ class SYSCALL:
           8 : self.read_string }[sysval](state)
 
     def print_integer(self, state):
-        val = state.getRegister("$a0")
+        val = state.register("$a0")
         state._out(val)
 
     def print_float(self, state):
-        state._out(state.getRegister("$12"))
+        state._out(state.register("$12"))
 
     def print_double(self, state):
-        state._out(state.getRegister("$f12"))
+        state._out(state.register("$f12"))
 
     def print_string(self, state):
-        idx = state.getRegister("$a0")
+        idx = state.register("$a0")
         val = ""
         for c in state.memory[idx:]:
             if not c is '\0':
@@ -132,18 +132,18 @@ class SYSCALL:
         state._out(val)
 
     def read_integer(self, state):
-        state.setRegister("$v0", int(state._in()))
+        state.set_register("$v0", int(state._in()))
 
     def read_float(self, state):
-        state.setRegister("$f0", float(state._in()))
+        state.set_register("$f0", float(state._in()))
 
     def read_double(self, state):
-        state.setRegister("$f0", float(state._in()))
+        state.set_register("$f0", float(state._in()))
 
     def read_string(self, state):
         x = state._in()
-        idx = state.getRegister("$a0")
-        length = state.getRegister("$a1")
+        idx = state.register("$a0")
+        length = state.register("$a1")
         for i in range(0, min(length, len(x))):
             state.memory[idx + i] = x[i]
         state.memory[idx + min(length, len(x))] = "\0"

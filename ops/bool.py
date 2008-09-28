@@ -63,12 +63,12 @@ class Branch:
         self.test_fn = test_fn
 
     def execute(self, state):
-        val1 = state.getRegister(self.reg1)
-        val2 = state.getRegister(self.reg2)
+        val1 = state.register(self.reg1)
+        val2 = state.register(self.reg2)
 
         if self.test_fn(val1, val2):
             jump_position = state.instructions.index(self.label_ref)
-            state.setRegister("$pc", jump_position)
+            state.set_register("$pc", jump_position)
 
 class BEQ(Branch):
     def __init__(self, reg1, reg2, label_ref):

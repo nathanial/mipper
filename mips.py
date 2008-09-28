@@ -1,5 +1,7 @@
 import logging
 import parser
+import new
+from types import MethodType
 
 logging.basicConfig(level=logging.DEBUG,
                     format='%(levelname)s %(message)s',
@@ -9,14 +11,14 @@ logging.basicConfig(level=logging.DEBUG,
 class ProgramSuspension: pass
 
 class Register:
-    def __init__(self): self.value = 0
-    def __cmp__(self, that): return self.value.__cmp__(that)
-    def setValue(self, value): self.value = value
-    def getValue(self): return self.value
+    def __init__(self): self.val = 0
+    def __cmp__(self, that): return self.val.__cmp__(that.value())
+    def set_value(self, val): self.val = val
+    def value(self): return self.val
     def __str__(self):
-        return str(self.value)
+        return str(self.val)
     def __repr__(self):
-        return str(self.value)
+        return str(self.val)
 
 class ProgramFactory:
     def __init__(self, input, output, on_suspension):
@@ -25,47 +27,50 @@ class ProgramFactory:
         self.on_suspension = on_suspension
 
     def create_program(self, text, **kwargs):
-        program = Program(text)
-        program.state._in = kwargs.get('input') or self.input
-        program.state._out = kwargs.get('output') or self.output
-        program.on_suspension = kwargs.get('on_suspension') or self.on_suspension
+        allocations, instructions = parser.parse("program", text)
+        state = State(instructions, allocations)
+        input = kwargs.get('input') or self.input
+        output = kwargs.get('output') or self.output
+        on_suspension = kwargs.get('on_suspension') or self.on_suspension
+        io = IO(input, output)
+        program = Program(state, io, on_suspension)
         return program
 
-class Program:
-    def __init__(self, text):
-        allocations, instructions = parser.parse("program", text)
-        self.state = State(instructions, allocations)
-        self.on_suspension = lambda state : None
+class Program(object):
+    def __init__(self, state, io, on_suspension):
+        self.state = state
+        self.io = io
+        self.on_suspension = on_suspension
 
     def execute(self):
         self.allocateMemory()
-        self.executeInstructions()
+        self.execute_instructions()
 
     def allocateMemory(self):
         for a in self.state.allocations:
             a.allocate(self.state)
 
-    def executeInstructions(self):
-        while self.state.hasNextInstruction():
+    def execute_instructions(self):
+        while self.state.has_next_instruction():
             try:
-                self.executeNextInstruction()
+                self.execute_next_instruction()
             except ProgramSuspension:
-                self.on_suspension(self.state)
+                self.behavior.on_suspension(self.state)
                 break
 
-    def executeNextInstruction(self):
+    def execute_next_instruction(self):
         instruction = self.state.currentInstruction()
         if self.isLabel(instruction):
-            self.state.incrementProgramCounter()
-            self.executeNextInstruction()
+            self.state.increment_program_counter()
+            self.execute_next_instruction()
         elif self.isBreak(instruction):
-            self.state.incrementProgramCounter()
+            self.state.increment_program_counter()
             self.suspendExecution()
         else:
             logging.debug("executing " + str(instruction))
-            instruction.execute(self.state)
-            self.state.incrementProgramCounter()
-            # instructions rely on value of programCounter()
+            instruction.execute(self.adapt_io(self.io,self.state))
+            self.state.increment_program_counter()
+            # instructions rely on value of program_counter()
             # increment only after instruction.execute
 
     def suspendExecution(self):
@@ -77,7 +82,32 @@ class Program:
     def isBreak(self, instruction):
         return instruction == "BREAK"
 
-class State:
+    def adapt_io(self, io, state):
+        return IOState(io, state)
+
+class IOState(object):
+    def __init__(self, io, state):
+        self.io = io
+        self.state = state
+
+    def _in(self): return self.io.input()
+    def _out(self, val): self.io.output(val)
+
+    def __getattr__(self, aname):
+        f = getattr(self.state, aname)
+        if isinstance(f, MethodType):
+            return new.instancemethod(f.im_func, self, self.state.__class__)
+        else:
+            return f
+
+
+
+class IO(object):
+    def __init__(self, input, output):
+        self.input = input
+        self.output = output
+
+class State(object):
     def __init__(self, instructions, allocations):
         self.registers = {}
         self.create_register("$zero", at = 0)
@@ -96,7 +126,7 @@ class State:
         self.create_register("$hi")
         self.create_register("$lo")
 
-        self.setRegister("$ra", -1)
+        self.set_register("$ra", -1)
         self.instructions = instructions
         self.allocations = allocations
         self.memory = []
@@ -114,21 +144,21 @@ class State:
             reg = Register()
             self.registers.update([[name, reg], ["$" + str(i), reg]])
 
-    def hasNextInstruction(self):
-        return self.programCounter() < len(self.instructions)
+    def has_next_instruction(self):
+        return self.program_counter() < len(self.instructions)
 
     def currentInstruction(self):
-        return self.instructions[self.programCounter()]
+        return self.instructions[self.program_counter()]
 
-    def programCounter(self):
-        return self.registers["$pc"].getValue()
+    def program_counter(self):
+        return self.registers["$pc"].value()
 
-    def incrementProgramCounter(self):
-        current_val = self.programCounter()
-        self.setRegister("$pc", current_val + 1)
+    def increment_program_counter(self):
+        current_val = self.program_counter()
+        self.set_register("$pc", current_val + 1)
 
-    def setRegister(self, reg, val):
-        self.registers[reg].setValue(val)
+    def set_register(self, reg, val):
+        self.registers[reg].set_value(val)
 
-    def getRegister(self, reg):
-        return self.registers[reg].getValue()
+    def register(self, reg):
+        return self.registers[reg].value()

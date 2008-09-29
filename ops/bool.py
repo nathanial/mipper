@@ -56,30 +56,35 @@ class ORI(object):
     execute = AssignmentImmediate("dst", "reg", "im")(lor)
 
 class Branch:
-    def __init__(self, reg1, reg2, label_ref, test_fn):
+    def __init__(self, reg1, reg2, label_ref):
         self.reg1 = reg1
         self.reg2 = reg2
         self.label_ref = label_ref
-        self.test_fn = test_fn
 
     def execute(self, state):
         val1 = state.register(self.reg1)
         val2 = state.register(self.reg2)
 
-        if self.test_fn(val1, val2):
+        if self.test(val1, val2):
             jump_position = state.instructions.index(self.label_ref)
             state.set_register("$pc", jump_position)
 
 class BEQ(Branch):
     def __init__(self, reg1, reg2, label_ref):
-        Branch.__init__(self, reg1, reg2, label_ref, lambda x,y: x == y)
+        Branch.__init__(self, reg1, reg2, label_ref)
+
+    def test(self, x, y):
+        return x == y
 
     def __str__(self):
         return "BEQ " + self.reg1 + " " + self.reg2 + " " + self.label_ref
 
 class BNE(Branch):
     def __init__(self, reg1, reg2, label_ref):
-        Branch.__init__(self, reg1, reg2, label_ref, lambda x,y: x != y)
+        Branch.__init__(self, reg1, reg2, label_ref)
+
+    def test(self, x, y):
+        return x != y
 
     def __str__(self):
         return "BNE " + self.reg1 + " " + self.reg2 + " " + self.label_ref

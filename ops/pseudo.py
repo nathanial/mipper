@@ -41,42 +41,60 @@ class MOVE:
 
 class BGT(Branch):
     def __init__(self, reg1, reg2, label_ref):
-        Branch.__init__(self, reg1, reg2, label_ref, lambda x,y: x > y)
+        Branch.__init__(self, reg1, reg2, label_ref)
+
+    def test(self, x, y):
+        return x > y
 
     def __str__(self):
         return "BGT " + self.reg1 + " " + self.reg2 + " " + self.label_ref
 
 class BLT(Branch):
     def __init__(self, reg1, reg2, label_ref):
-        Branch.__init__(self, reg1, reg2, label_ref, lambda x,y: x < y)
+        Branch.__init__(self, reg1, reg2, label_ref)
+
+    def test(self, x, y):
+        return x < y
 
     def __str__(self):
         return "BLT " + self.reg1 + " " + self.reg2 + " " + self.label_ref
 
 class BGE(Branch):
     def __init__(self, reg1, reg2, label_ref):
-        Branch.__init__(self, reg1, reg2, label_ref, lambda x,y: x >= y)
+        Branch.__init__(self, reg1, reg2, label_ref)
+
+    def test(self, x, y):
+        return x >= y
 
     def __str__(self):
         return "BGE " + self.reg1 + " " + self.reg2 + " " + self.label_ref
 
 class BLE(Branch):
     def __init__(self, reg1, reg2, label_ref):
-        Branch.__init__(self, reg1, reg2, label_ref, lambda x,y: x <= y)
+        Branch.__init__(self, reg1, reg2, label_ref)
+
+    def test(self, x, y):
+        return x <= y
 
     def __str__(self):
         return "BLE " + self.reg1 + " " + self.reg2 + " " + self.label_ref
 
 class BGTU(Branch):
     def __init__(self, reg1, reg2, label_ref):
-        Branch.__init__(self, reg1, reg2, label_ref, lambda x,y: x > y)
+        Branch.__init__(self, reg1, reg2, label_ref)
+
+    def test(self, x, y):
+        return x > y
 
     def __str__(self):
         return "BGTU " + self.reg1 + " " + self.reg2 + " " + self.label_ref
 
 class BGTZ(Branch):
     def __init__(self, reg1, label_ref):
-        Branch.__init__(self, reg1, "$zero", label_ref, lambda x,y: x > y)
+        Branch.__init__(self, reg1, "$zero", label_ref)
+
+    def test(self, x, y):
+        return x > y
 
     def __str__(self):
         return "BGTZ " + self.reg1 + " " + self.label_ref

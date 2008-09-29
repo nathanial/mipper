@@ -55,7 +55,7 @@ class Program(object):
             try:
                 self.execute_next_instruction()
             except ProgramSuspension:
-                self.behavior.on_suspension(self.state)
+                self.on_suspension(self.state)
                 break
 
     def execute_next_instruction(self):
@@ -99,8 +99,6 @@ class IOState(object):
             return new.instancemethod(f.im_func, self, self.state.__class__)
         else:
             return f
-
-
 
 class IO(object):
     def __init__(self, input, output):

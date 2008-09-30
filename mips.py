@@ -67,7 +67,8 @@ class Program(object):
             self.state.increment_program_counter()
             self.suspendExecution()
         else:
-            logging.debug("executing " + str(instruction))
+#            logging.info("executing " + str(instruction))
+#            logging.info(" of type " + str(type(instruction)))
             instruction.execute(self.adapt_io(self.io,self.state))
             self.state.increment_program_counter()
             # instructions rely on value of program_counter()

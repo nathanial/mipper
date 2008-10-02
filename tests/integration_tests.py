@@ -1,6 +1,6 @@
 from __future__ import with_statement
 import parser
-from mipper.mips import Program, ProgramFactory
+from mipper.mips import Program, ProgramFactory, ParseError
 import unittest
 from unittest import TestSuite, TestLoader, TestResult, TestCase
 
@@ -17,13 +17,17 @@ program_factory = ProgramFactory(input = std_input,
                                  output = std_output,
                                  on_suspension = print_blah)
 
+def load_file(path):
+    prog_text = ""
+    with open(path) as f:
+        for line in f:
+            line = line.replace("\\n", "\n")
+            prog_text += line
+    return prog_text
+
 class IntegrationTests(TestCase):
     def testFib1(self):
-        fib_text = ""
-        with open("fib.asm") as f:
-            for line in f:
-                line = line.replace("\\n", "\n")
-                fib_text += line
+        fib_text = load_file("fib.asm")
 
         output_list = []
         def mod_output(val):
@@ -36,43 +40,39 @@ class IntegrationTests(TestCase):
                                                   on_suspension = mod_suspension)
         fib_prog.execute()
         self.assertEqual(fib_list,
-                         filter(lambda x: not type(x) is str, output_list[:-3]))
+                         filter(lambda x: not type(x) is str,
+                                output_list[:-3]))
 
     def testFib2(self):
-        mem_text = ""
-        with open("test1.asm") as f:
-            for line in f:
-                line = line.replace("\\n", "\n")
-                mem_text += line
-
+        mem_text = load_file("test1.asm")
         mem_prog = program_factory.create_program(mem_text)
         mem_prog.execute()
         self.assertEqual(fib_list, mem_prog.state.memory[:11])
 
     def test3(self):
-        io_text = ""
-        with open("test2.asm") as f:
-            for line in f:
-                line = line.replace("\\n", "\n")
-                io_text += line
+        io_text = load_file("test2.asm")
 
         def mod_input():
             return "blah"
 
-        io_prog = program_factory.create_program(io_text, input = mod_input)
+        io_prog = program_factory.create_program(io_text,
+                                                 input = mod_input)
         io_prog.execute()
         self.assertEqual(['b','l','a','h'], io_prog.state.memory[:4])
 
     def test4(self):
-        comp_text = ""
-        with open("test4.asm") as f:
-            for line in f:
-                line = line.replace("\\n", "\n")
-                comp_text += line
-
+        comp_text = load_file("test4.asm")
         comp_prog = program_factory.create_program(comp_text)
         comp_prog.execute()
         self.assertEqual(comp_prog.state.register("$10"), 5)
+
+    def test5(self):
+        bad_text = load_file("bad1.asm")
+        def create_program():
+            program_factory.create_program(bad_text)
+
+        self.assertRaises(ParseError,
+                          create_program)
 
 
 if __name__ == '__main__':

@@ -10,6 +10,13 @@ logging.basicConfig(level=logging.DEBUG,
 
 class ProgramSuspension: pass
 
+class ParseError:
+    def __init__(self, msg):
+        self.msg = msg
+
+    def __str__(self):
+        return self.msg
+
 class Register:
     def __init__(self): self.val = 0
     def __cmp__(self, that): return self.val.__cmp__(that.value())
@@ -27,7 +34,12 @@ class ProgramFactory:
         self.on_suspension = on_suspension
 
     def create_program(self, text, **kwargs):
-        allocations, instructions = parser.parse("program", text)
+        allocations = instructions = None
+        try:
+            allocations, instructions = parser.parse("program", text)
+        except:
+            raise ParseError("Parsing failed")
+
         state = State(instructions, allocations)
         input = kwargs.get('input') or self.input
         output = kwargs.get('output') or self.output
@@ -41,6 +53,7 @@ class Program(object):
         self.state = state
         self.io = io
         self.on_suspension = on_suspension
+        self.adapted_io = self.adapt_io(self.io, self.state)
 
     def execute(self):
         self.allocateMemory()
@@ -67,9 +80,7 @@ class Program(object):
             self.state.increment_program_counter()
             self.suspendExecution()
         else:
-#            logging.info("executing " + str(instruction))
-#            logging.info(" of type " + str(type(instruction)))
-            instruction.execute(self.adapt_io(self.io,self.state))
+            instruction.execute(self.adapted_io)
             self.state.increment_program_counter()
             # instructions rely on value of program_counter()
             # increment only after instruction.execute

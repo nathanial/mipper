@@ -1,59 +1,31 @@
-from mipper.helpers import AssignmentOp, AssignmentImmediate, AssignHiLo
+from mipper.helpers import Assignment, AssignmentI, AssignmentHiLo
 
 
-def land(val1, val2):
+def land(obj, val1, val2):
     return val1 & val2
-def lor(val1, val2):
+def lor(obj, val1, val2):
     return val1 | val2
-def slt(val1, val2):
+def slt(obj, val1, val2):
     if val1 < val2:
         return 1
     else:
         return 0
 
-class AND(object):
-    def __init__(self, dst, reg1, reg2):
-        self.dst = dst
-        self.reg1 = reg1
-        self.reg2 = reg2
+class AND(Assignment):
+    name = "AND"
+    operation = land
 
-    def __str__(self):
-        return "AND " + self.dst + " " + self.reg1 + " " + self.reg2
+class OR(Assignment):
+    name = "OR"
+    operation = lor
 
-    execute = AssignmentOp("dst", "reg1", "reg2")(land)
+class ANDI(AssignmentI):
+    name = "ANDI"
+    operation = land
 
-class OR(object):
-    def __init__(self, dst, reg1, reg2):
-        self.dst = dst
-        self.reg1 = reg1
-        self.reg2 = reg2
-
-    def __str__(self):
-        return "OR " + self.dst + " " + self.reg1 + " " + self.reg2
-
-    execute = AssignmentOp("dst", "reg1", "reg2")(lor)
-
-class ANDI(object):
-    def __init__(self, dst, reg, im):
-        self.dst = dst
-        self.reg = reg
-        self.im = im
-
-    def __str__(self):
-        return "ANDI " + self.dst + " " + self.reg + " " + str(self.im)
-
-    execute = AssignmentImmediate("dst", "reg", "im")(land)
-
-class ORI(object):
-    def __init__(self, dst, reg, im):
-        self.dst = dst
-        self.reg = reg
-        self.im = im
-
-    def __str__(self):
-        return "ORI " + self.dst + " " + self.reg + " " + str(self.im)
-
-    execute = AssignmentImmediate("dst", "reg", "im")(lor)
+class ORI(AssignmentI):
+    name = "ORI"
+    operation = lor
 
 class Branch:
     def __init__(self, reg1, reg2, label_ref):
@@ -89,47 +61,18 @@ class BNE(Branch):
     def __str__(self):
         return "BNE " + self.reg1 + " " + self.reg2 + " " + self.label_ref
 
-class SLT(object):
-    def __init__(self, dst, reg1, reg2):
-        self.dst = dst
-        self.reg1 = reg2
-        self.reg2 = reg2
+class SLT(Assignment):
+    name = "SLT"
+    operation = slt
 
-    def __str__(self):
-        return "SLT " + self.dst + " " + self.reg1 + " " + self.reg2
+class SLTI(AssignmentI):
+    name = "SLTI"
+    operation = slt
 
-    execute = AssignmentOp("dst", "reg1", "reg2")(slt)
+class SLTU(Assignment):
+    name = "SLTU"
+    operation = slt
 
-class SLTI(object):
-    def __init__(self, dst, reg, im):
-        self.dst = dst
-        self.reg = reg
-        self.im = im
-
-    def __str__(self):
-        return "SLTI " + self.dst + " " + self.dst + " " + self.reg + " " + self.im
-
-    execute = AssignmentImmediate("dst", "reg", "im")(slt)
-
-
-class SLTU(object):
-    def __init__(self, dst, reg1, reg2):
-        self.dst = dst
-        self.reg1 = reg1
-        self.reg2 = reg2
-
-    def __str__(self):
-        return "SLTU " + self.dst + " " + self.reg1 + " " + self.reg2
-
-    execute = AssignmentOp("dst", "reg1", "reg2")(slt)
-
-class SLTIU(object):
-    def __init__(self, dst, reg, im):
-        self.dst = dst
-        self.reg = reg
-        self.im = im
-
-    def __str__(self):
-        return "SLTIU " + self.dst + " " + self.reg + " " + self.im
-
-    execute = AssignmentImmediate("dst", "reg", "im")(slt)
+class SLTIU(AssignmentI):
+    name = "SLTIU"
+    operation = slt

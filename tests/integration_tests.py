@@ -74,6 +74,11 @@ class IntegrationTests(TestCase):
         self.assertRaises(ParseError,
                           create_program)
 
+    def test6(self):
+        text = load_file("test6.asm")
+        program_factory.create_program(text)
+
+
 
 if __name__ == '__main__':
     unittest.main()

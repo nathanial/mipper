@@ -32,13 +32,13 @@ parser MipsParser:
                   (data {{ ret = data }} |
                    text {{ ret = text }}) END {{ return ret }}
 
-    rule data: ".data\n" {{ allocations = [] }}
+    rule data: ".data" end_line {{ allocations = [] }}
                          {{ instructions = [] }}
                          (allocation {{ allocations.append(allocation) }} |
                           empty_line)* (text {{ instructions = text[1] }})?
                           {{ return allocations, instructions }}
 
-    rule text: ".text\n" {{ instructions = [] }}
+    rule text: ".text" end_line {{ instructions = [] }}
                          {{ allocations = [] }}
                        (statement {{ append_or_extend(instructions, statement) }} |
                         LABEL end_line {{ instructions.append(LABEL.strip(':')) }} |

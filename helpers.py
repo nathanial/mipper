@@ -1,31 +1,59 @@
+import new
 
-def AssignmentOp(dst, reg1, reg2):
-    def f(meth):
-        def g(obj, program):
-            val1 = program.register(obj.__getattribute__(reg1))
-            val2 = program.register(obj.__getattribute__(reg2))
-            result = meth(val1, val2)
-            program.set_register(obj.__getattribute__(dst), result)
-        return g
-    return f
+def is_label(offset):
+    return type(offset) is str
 
-def AssignmentImmediate(dst, reg1, im):
-    def f(meth):
-        def g(obj, program):
-            val1 = program.register(obj.__getattribute__(reg1))
-            val2 = obj.__getattribute__(im)
-            result = meth(val1, val2)
-            program.set_register(obj.__getattribute__(dst), result)
-        return g
-    return f
+class Assignment(object):
+    def __init__(self, dst, reg1, reg2):
+        self.dst = dst
+        self.reg1 = reg1
+        self.reg2 = reg2
 
-def AssignHiLo(reg1, reg2):
-    def f(meth):
-        def g(obj, program):
-            val1 = program.register(obj.__getattribute__(reg1))
-            val2 = program.register(obj.__getattribute__(reg2))
-            hi, lo = meth(val1, val2)
-            program.set_register("$hi", hi)
-            program.set_register("$lo", lo)
-        return g
-    return f
+    def __str__(self):
+        return " ".join([self.__class__.name,
+                         self.dst,
+                         self.reg1,
+                         self.reg2])
+
+    def execute(self, state):
+        val1 = state.register(self.reg1)
+        val2 = state.register(self.reg2)
+        result = self.operation(val1, val2)
+        state.set_register(self.dst, result)
+
+
+class AssignmentI(object):
+    def __init__(self, dst, reg, im):
+        self.dst = dst
+        self.reg = reg
+        self.im = im
+
+    def __str__(self):
+        return " ".join([self.__class__.name,
+                         self.dst,
+                         self.reg,
+                         self.im])
+
+    def execute(self, state):
+        val1 = state.register(self.reg)
+        val2 = self.im
+        result = self.operation(val1, val2)
+        state.set_register(self.dst, result)
+
+class AssignmentHiLo(object):
+    def __init__(self, reg1, reg2):
+        self.reg1 = reg1
+        self.reg2 = reg2
+
+    def __str__(self):
+        return " ".join([self.__class__.name,
+                         self.reg1,
+                         self.reg2])
+
+    def execute(self, state):
+        val1 = state.register(self.reg1)
+        val2 = state.register(self.reg2)
+        hi, lo = self.operation(val1, val2)
+        state.set_register("$hi", hi)
+        state.set_register("$lo", lo)
+

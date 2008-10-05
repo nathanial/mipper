@@ -1,4 +1,5 @@
 import logging
+from mipper.helpers import is_label
 
 class JUMP:
     def __init__(self, label_ref):
@@ -8,7 +9,7 @@ class JUMP:
         return "JUMP to " + self.label_ref
 
     def execute(self, state):
-        state.set_register("$pc", state.instructions.index(self.label_ref))
+        state.set_register("$pc", state.address_of(self.label_ref))
 
 class JAL:
     def __init__(self, label_ref):
@@ -20,7 +21,7 @@ class JAL:
     def execute(self, state):
         state.set_register("$ra", state.program_counter())
         jump_position = state.instructions.index(self.label_ref)
-        state.set_register("$pc", jump_position)
+        state.set_register("$pc", state.address_of(self.label_ref))
 
 class JR:
     def __init__(self, return_reg):
@@ -42,8 +43,7 @@ class MFHI:
         return "MFHI " + self.dst
 
     def execute(self, state):
-        val = state.register("$hi")
-        state.set_register(self.dst, val)
+        state.set_register(self.dst, _from = "$hi")
 
 class MFLO:
     def __init__(self, dst):
@@ -53,8 +53,7 @@ class MFLO:
         return "MFLO " + self.dst
 
     def execute(self, state):
-        val = state.register("$lo")
-        state.set_register(self.dst, val)
+        state.set_register(self.dst, _from = "$lo")
 
 class LW:
     def __init__(self, dst, indirect_address):
@@ -68,7 +67,7 @@ class LW:
     def execute(self, state):
         idx = -1
         base = state.register(self.base_register)
-        if type(self.offset) is str:
+        if is_label(self.offset):
             idx = state.labels[self.offset] + (base / 4)
         else:
             idx = self.offset + (base / 4)
@@ -87,7 +86,7 @@ class SW:
     def execute(self, state):
         idx = -1
         base = state.register(self.base_register)
-        if type(self.offset) is str:
+        if is_label(self.offset):
             idx = state.labels[self.offset] + (base / 4)
         else:
             idx = self.offset + (base / 4)
@@ -159,7 +158,7 @@ class CREATE_STRING:
     def allocate(self, state):
         idx = len(state.memory)
         state.memory.extend(self.ascii_string)
-        state.labels.update([[self.label, idx]])
+        state.labels[self.label] = idx
 
 class CREATE_SPACE:
     def __init__(self, label, size):
@@ -175,4 +174,5 @@ class CREATE_SPACE:
         array = map(lambda x : 0, range(0, self.size / 4))
         idx = len(state.memory)
         state.memory.extend(array)
-        state.labels.update([[self.label, idx]])
+        state.labels[self.label] = idx
+

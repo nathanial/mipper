@@ -57,8 +57,8 @@ class MipsParserScanner(yappsrt.Scanner):
         ('"\\\\("', re.compile('\\(')),
         ('".space"', re.compile('.space')),
         ('".asciiz"', re.compile('.asciiz')),
-        ('".text\\n"', re.compile('.text\n')),
-        ('".data\\n"', re.compile('.data\n')),
+        ('".text"', re.compile('.text')),
+        ('".data"', re.compile('.data')),
         ('"\\n"', re.compile('\n')),
         (' ', re.compile(' ')),
         ('END', re.compile('$')),
@@ -91,15 +91,15 @@ class MipsParser(yappsrt.Parser):
 
     def program(self, _parent=None):
         _context = self.Context(_parent, self._scanner, self._pos, 'program', [])
-        while self._peek('"\\n"', 'COMMENT', '".data\\n"', '".text\\n"', 'LABEL', 'SYSTEM_CALL', 'BREAK', '"j"', '"jal"', '"jr"', '"mfhi"', '"mflo"', '"lw"', '"sw"', '"add"', '"sub"', '"addu"', '"addi"', '"addiu"', '"subu"', '"div"', '"divu"', '"mult"', '"and"', '"or"', '"andi"', '"ori"', '"beq"', '"bne"', '"slt"', '"slti"', '"sltu"', '"sltiu"', '"la"', '"li"', '"move"', '"bgt"', '"blt"', '"bge"', '"ble"', '"bgtu"', '"bgtz"', 'END') in ['"\\n"', 'COMMENT']:
+        while self._peek('"\\n"', 'COMMENT', '".data"', '".text"', 'LABEL', 'SYSTEM_CALL', 'BREAK', '"j"', '"jal"', '"jr"', '"mfhi"', '"mflo"', '"lw"', '"sw"', '"add"', '"sub"', '"addu"', '"addi"', '"addiu"', '"subu"', '"div"', '"divu"', '"mult"', '"and"', '"or"', '"andi"', '"ori"', '"beq"', '"bne"', '"slt"', '"slti"', '"sltu"', '"sltiu"', '"la"', '"li"', '"move"', '"bgt"', '"blt"', '"bge"', '"ble"', '"bgtu"', '"bgtz"', 'END') in ['"\\n"', 'COMMENT']:
             empty_line = self.empty_line(_context)
-        if self._peek() not in ['"\\n"', 'COMMENT', '".data\\n"', '".text\\n"', 'LABEL', 'SYSTEM_CALL', 'BREAK', '"j"', '"jal"', '"jr"', '"mfhi"', '"mflo"', '"lw"', '"sw"', '"add"', '"sub"', '"addu"', '"addi"', '"addiu"', '"subu"', '"div"', '"divu"', '"mult"', '"and"', '"or"', '"andi"', '"ori"', '"beq"', '"bne"', '"slt"', '"slti"', '"sltu"', '"sltiu"', '"la"', '"li"', '"move"', '"bgt"', '"blt"', '"bge"', '"ble"', '"bgtu"', '"bgtz"', 'END']:
-            raise yappsrt.SyntaxError(charpos=self._scanner.get_prev_char_pos(), context=_context, msg='Need one of ' + ', '.join(['"\\n"', 'COMMENT', '".data\\n"', '".text\\n"', 'LABEL', 'SYSTEM_CALL', 'BREAK', '"j"', '"jal"', '"jr"', '"mfhi"', '"mflo"', '"lw"', '"sw"', '"add"', '"sub"', '"addu"', '"addi"', '"addiu"', '"subu"', '"div"', '"divu"', '"mult"', '"and"', '"or"', '"andi"', '"ori"', '"beq"', '"bne"', '"slt"', '"slti"', '"sltu"', '"sltiu"', '"la"', '"li"', '"move"', '"bgt"', '"blt"', '"bge"', '"ble"', '"bgtu"', '"bgtz"', 'END']))
-        _token = self._peek('".data\\n"', '".text\\n"')
-        if _token == '".data\\n"':
+        if self._peek() not in ['"\\n"', 'COMMENT', '".data"', '".text"', 'LABEL', 'SYSTEM_CALL', 'BREAK', '"j"', '"jal"', '"jr"', '"mfhi"', '"mflo"', '"lw"', '"sw"', '"add"', '"sub"', '"addu"', '"addi"', '"addiu"', '"subu"', '"div"', '"divu"', '"mult"', '"and"', '"or"', '"andi"', '"ori"', '"beq"', '"bne"', '"slt"', '"slti"', '"sltu"', '"sltiu"', '"la"', '"li"', '"move"', '"bgt"', '"blt"', '"bge"', '"ble"', '"bgtu"', '"bgtz"', 'END']:
+            raise yappsrt.SyntaxError(charpos=self._scanner.get_prev_char_pos(), context=_context, msg='Need one of ' + ', '.join(['"\\n"', 'COMMENT', '".data"', '".text"', 'LABEL', 'SYSTEM_CALL', 'BREAK', '"j"', '"jal"', '"jr"', '"mfhi"', '"mflo"', '"lw"', '"sw"', '"add"', '"sub"', '"addu"', '"addi"', '"addiu"', '"subu"', '"div"', '"divu"', '"mult"', '"and"', '"or"', '"andi"', '"ori"', '"beq"', '"bne"', '"slt"', '"slti"', '"sltu"', '"sltiu"', '"la"', '"li"', '"move"', '"bgt"', '"blt"', '"bge"', '"ble"', '"bgtu"', '"bgtz"', 'END']))
+        _token = self._peek('".data"', '".text"')
+        if _token == '".data"':
             data = self.data(_context)
             ret = data
-        else: # == '".text\\n"'
+        else: # == '".text"'
             text = self.text(_context)
             ret = text
         END = self._scan('END')
@@ -107,26 +107,28 @@ class MipsParser(yappsrt.Parser):
 
     def data(self, _parent=None):
         _context = self.Context(_parent, self._scanner, self._pos, 'data', [])
-        self._scan('".data\\n"')
+        self._scan('".data"')
+        end_line = self.end_line(_context)
         allocations = []
         instructions = []
-        while self._peek('"\\n"', 'COMMENT', '".text\\n"', 'LABEL', 'SYSTEM_CALL', 'BREAK', '".data\\n"', '"j"', '"jal"', '"jr"', '"mfhi"', '"mflo"', '"lw"', '"sw"', '"add"', '"sub"', '"addu"', '"addi"', '"addiu"', '"subu"', '"div"', '"divu"', '"mult"', '"and"', '"or"', '"andi"', '"ori"', '"beq"', '"bne"', '"slt"', '"slti"', '"sltu"', '"sltiu"', '"la"', '"li"', '"move"', '"bgt"', '"blt"', '"bge"', '"ble"', '"bgtu"', '"bgtz"', 'END') in ['"\\n"', 'COMMENT', 'LABEL']:
+        while self._peek('"\\n"', 'COMMENT', '".text"', 'LABEL', 'SYSTEM_CALL', 'BREAK', '".data"', '"j"', '"jal"', '"jr"', '"mfhi"', '"mflo"', '"lw"', '"sw"', '"add"', '"sub"', '"addu"', '"addi"', '"addiu"', '"subu"', '"div"', '"divu"', '"mult"', '"and"', '"or"', '"andi"', '"ori"', '"beq"', '"bne"', '"slt"', '"slti"', '"sltu"', '"sltiu"', '"la"', '"li"', '"move"', '"bgt"', '"blt"', '"bge"', '"ble"', '"bgtu"', '"bgtz"', 'END') in ['"\\n"', 'COMMENT', 'LABEL']:
             _token = self._peek('"\\n"', 'COMMENT', 'LABEL')
             if _token == 'LABEL':
                 allocation = self.allocation(_context)
                 allocations.append(allocation)
             else: # in ['"\\n"', 'COMMENT']
                 empty_line = self.empty_line(_context)
-        if self._peek() not in ['"\\n"', 'COMMENT', '".text\\n"', 'LABEL', 'SYSTEM_CALL', 'BREAK', '".data\\n"', '"j"', '"jal"', '"jr"', '"mfhi"', '"mflo"', '"lw"', '"sw"', '"add"', '"sub"', '"addu"', '"addi"', '"addiu"', '"subu"', '"div"', '"divu"', '"mult"', '"and"', '"or"', '"andi"', '"ori"', '"beq"', '"bne"', '"slt"', '"slti"', '"sltu"', '"sltiu"', '"la"', '"li"', '"move"', '"bgt"', '"blt"', '"bge"', '"ble"', '"bgtu"', '"bgtz"', 'END']:
-            raise yappsrt.SyntaxError(charpos=self._scanner.get_prev_char_pos(), context=_context, msg='Need one of ' + ', '.join(['"\\n"', 'COMMENT', 'LABEL', '".text\\n"', 'SYSTEM_CALL', 'BREAK', '".data\\n"', '"j"', '"jal"', '"jr"', '"mfhi"', '"mflo"', '"lw"', '"sw"', '"add"', '"sub"', '"addu"', '"addi"', '"addiu"', '"subu"', '"div"', '"divu"', '"mult"', '"and"', '"or"', '"andi"', '"ori"', '"beq"', '"bne"', '"slt"', '"slti"', '"sltu"', '"sltiu"', '"la"', '"li"', '"move"', '"bgt"', '"blt"', '"bge"', '"ble"', '"bgtu"', '"bgtz"', 'END']))
-        if self._peek('".text\\n"', 'END') == '".text\\n"':
+        if self._peek() not in ['"\\n"', 'COMMENT', '".text"', 'LABEL', 'SYSTEM_CALL', 'BREAK', '".data"', '"j"', '"jal"', '"jr"', '"mfhi"', '"mflo"', '"lw"', '"sw"', '"add"', '"sub"', '"addu"', '"addi"', '"addiu"', '"subu"', '"div"', '"divu"', '"mult"', '"and"', '"or"', '"andi"', '"ori"', '"beq"', '"bne"', '"slt"', '"slti"', '"sltu"', '"sltiu"', '"la"', '"li"', '"move"', '"bgt"', '"blt"', '"bge"', '"ble"', '"bgtu"', '"bgtz"', 'END']:
+            raise yappsrt.SyntaxError(charpos=self._scanner.get_prev_char_pos(), context=_context, msg='Need one of ' + ', '.join(['"\\n"', 'COMMENT', 'LABEL', '".text"', 'SYSTEM_CALL', 'BREAK', '".data"', '"j"', '"jal"', '"jr"', '"mfhi"', '"mflo"', '"lw"', '"sw"', '"add"', '"sub"', '"addu"', '"addi"', '"addiu"', '"subu"', '"div"', '"divu"', '"mult"', '"and"', '"or"', '"andi"', '"ori"', '"beq"', '"bne"', '"slt"', '"slti"', '"sltu"', '"sltiu"', '"la"', '"li"', '"move"', '"bgt"', '"blt"', '"bge"', '"ble"', '"bgtu"', '"bgtz"', 'END']))
+        if self._peek('".text"', 'END') == '".text"':
             text = self.text(_context)
             instructions = text[1]
         return allocations, instructions
 
     def text(self, _parent=None):
         _context = self.Context(_parent, self._scanner, self._pos, 'text', [])
-        self._scan('".text\\n"')
+        self._scan('".text"')
+        end_line = self.end_line(_context)
         instructions = []
         allocations = []
         while 1:
@@ -148,8 +150,8 @@ class MipsParser(yappsrt.Parser):
                 instructions.append(BREAK)
             else: # in ['"\\n"', 'COMMENT']
                 empty_line = self.empty_line(_context)
-            if self._peek('LABEL', 'SYSTEM_CALL', 'BREAK', '"\\n"', 'COMMENT', '"j"', '"jal"', '"jr"', '"mfhi"', '"mflo"', '"lw"', '"sw"', '"add"', '"sub"', '"addu"', '"addi"', '"addiu"', '"subu"', '"div"', '"divu"', '"mult"', '"and"', '"or"', '"andi"', '"ori"', '"beq"', '"bne"', '"slt"', '"slti"', '"sltu"', '"sltiu"', '"la"', '"li"', '"move"', '"bgt"', '"blt"', '"bge"', '"ble"', '"bgtu"', '"bgtz"', '".data\\n"', '".text\\n"', 'END') not in ['LABEL', 'SYSTEM_CALL', 'BREAK', '"\\n"', 'COMMENT', '"j"', '"jal"', '"jr"', '"mfhi"', '"mflo"', '"lw"', '"sw"', '"add"', '"sub"', '"addu"', '"addi"', '"addiu"', '"subu"', '"div"', '"divu"', '"mult"', '"and"', '"or"', '"andi"', '"ori"', '"beq"', '"bne"', '"slt"', '"slti"', '"sltu"', '"sltiu"', '"la"', '"li"', '"move"', '"bgt"', '"blt"', '"bge"', '"ble"', '"bgtu"', '"bgtz"']: break
-        if self._peek('".data\\n"', 'END') == '".data\\n"':
+            if self._peek('LABEL', 'SYSTEM_CALL', 'BREAK', '"\\n"', 'COMMENT', '"j"', '"jal"', '"jr"', '"mfhi"', '"mflo"', '"lw"', '"sw"', '"add"', '"sub"', '"addu"', '"addi"', '"addiu"', '"subu"', '"div"', '"divu"', '"mult"', '"and"', '"or"', '"andi"', '"ori"', '"beq"', '"bne"', '"slt"', '"slti"', '"sltu"', '"sltiu"', '"la"', '"li"', '"move"', '"bgt"', '"blt"', '"bge"', '"ble"', '"bgtu"', '"bgtz"', '".data"', '".text"', 'END') not in ['LABEL', 'SYSTEM_CALL', 'BREAK', '"\\n"', 'COMMENT', '"j"', '"jal"', '"jr"', '"mfhi"', '"mflo"', '"lw"', '"sw"', '"add"', '"sub"', '"addu"', '"addi"', '"addiu"', '"subu"', '"div"', '"divu"', '"mult"', '"and"', '"or"', '"andi"', '"ori"', '"beq"', '"bne"', '"slt"', '"slti"', '"sltu"', '"sltiu"', '"la"', '"li"', '"move"', '"bgt"', '"blt"', '"bge"', '"ble"', '"bgtu"', '"bgtz"']: break
+        if self._peek('".data"', 'END') == '".data"':
             data = self.data(_context)
             allocations = data[0]
         return allocations, instructions

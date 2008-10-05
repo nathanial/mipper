@@ -2,20 +2,7 @@ import logging
 import parser
 import new
 from types import MethodType
-
-logging.basicConfig(level=logging.DEBUG,
-                    format='%(levelname)s %(message)s',
-                    filename='mipper.log',
-                    filemode='w')
-
-class ProgramSuspension: pass
-
-class ParseError:
-    def __init__(self, msg):
-        self.msg = msg
-
-    def __str__(self):
-        return self.msg
+from events import ProgramSuspension, ParseError
 
 class Register:
     def __init__(self): self.val = 0
@@ -145,14 +132,16 @@ class State(object):
 
     def create_register(self, name, at = -1):
         reg = Register()
-        self.registers.update([[name, reg], ["$" + str(at), reg]])
+        self.registers[name] = reg
+        self.registers["$" + str(at)] = reg
 
     def create_registers(self, prefix, _from, _to, numeral = 0):
         for i in range(_from, _to + 1):
             offset = i - _from
             name = prefix + str(numeral + offset)
             reg = Register()
-            self.registers.update([[name, reg], ["$" + str(i), reg]])
+            self.registers[name] = reg
+            self.registers["$" + str(i)] = reg
 
     def has_next_instruction(self):
         return self.program_counter() < len(self.instructions)
@@ -167,8 +156,13 @@ class State(object):
         current_val = self.program_counter()
         self.set_register("$pc", current_val + 1)
 
-    def set_register(self, reg, val):
+    def set_register(self, reg, val = None, _from = None):
+        if _from:
+            val = self.registers[_from].value()
         self.registers[reg].set_value(val)
 
     def register(self, reg):
         return self.registers[reg].value()
+
+    def address_of(self, label):
+        return self.instructions.index(label)
